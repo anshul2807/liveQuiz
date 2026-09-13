@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuiz } from '../context/QuizContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
-import { Zap, Users, PlusCircle, LogIn, LogOut, Sun, Moon, Lock, ShieldCheck } from 'lucide-react';
+import { Zap, Users, PlusCircle, LogIn, LogOut, Sun, Moon, Lock, ShieldCheck, Code2, BookOpen, Terminal } from 'lucide-react';
 
 export const Navbar = ({ currentView, onNavigate }) => {
   const { isConnected, roomCode, role, isAdminAuthenticated, adminUser, logoutAdmin } = useQuiz();
@@ -66,6 +66,45 @@ export const Navbar = ({ currentView, onNavigate }) => {
           >
             <LogIn className="w-4 h-4" />
             <span className="hidden sm:inline">Join Quiz</span>
+          </button>
+
+          {/* Practice MCQs - Accessible to everyone */}
+          <button
+            onClick={() => onNavigate('mcqs')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center space-x-1.5 transition-colors ${
+              currentView === 'mcqs' 
+                ? 'bg-purple-600 text-white' 
+                : 'text-slate-700 dark:text-slate-300 hover:text-purple-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Practice MCQs</span>
+          </button>
+
+          {/* Coding Lab - Accessible to everyone */}
+          <button
+            onClick={() => onNavigate('lab')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center space-x-1.5 transition-colors ${
+              currentView === 'lab' 
+                ? 'bg-purple-600 text-white' 
+                : 'text-slate-700 dark:text-slate-300 hover:text-purple-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Code2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Coding Lab</span>
+          </button>
+
+          {/* C/C++ Web IDE - Accessible to everyone */}
+          <button
+            onClick={() => onNavigate('ide')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center space-x-1.5 transition-colors ${
+              currentView === 'ide' 
+                ? 'bg-purple-600 text-white' 
+                : 'text-slate-700 dark:text-slate-300 hover:text-purple-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Terminal className="w-4 h-4" />
+            <span className="hidden sm:inline">C/C++ IDE</span>
           </button>
 
           {/* ADMIN ONLY NAVIGATION ITEMS */}

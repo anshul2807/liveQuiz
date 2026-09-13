@@ -5,6 +5,7 @@ import { AdminLiveQuiz } from '../components/AdminLiveQuiz.jsx';
 import { AdminLeaderboard } from '../components/AdminLeaderboard.jsx';
 import { AdminLogin } from '../components/AdminLogin.jsx';
 import { Play, Sparkles, BookOpen, Layers, Clock, PlusCircle, RefreshCw, LogOut } from 'lucide-react';
+import { getApiUrl } from '../services/api.js';
 
 export const AdminDashboard = ({ onNavigate }) => {
   const {
@@ -28,7 +29,7 @@ export const AdminDashboard = ({ onNavigate }) => {
   const fetchQuizzes = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/quizzes');
+      const res = await fetch(getApiUrl('/api/quizzes'));
       const data = await res.json();
       if (data.success && data.quizzes) {
         setQuizzes(data.quizzes);
@@ -43,13 +44,13 @@ export const AdminDashboard = ({ onNavigate }) => {
     }
   };
 
+  // If no room is active, load available quizzes once admin is authenticated
   useEffect(() => {
-    if (isAdminAuthenticated) {
+    if (!roomCode && isAdminAuthenticated) {
       fetchQuizzes();
     }
-  }, [isAdminAuthenticated]);
+  }, [roomCode, isAdminAuthenticated]);
 
-  // 1. If not authenticated as Admin, show Admin Login screen!
   if (!isAdminAuthenticated) {
     return (
       <AdminLogin
@@ -65,7 +66,7 @@ export const AdminDashboard = ({ onNavigate }) => {
     setCreatingRoom(true);
 
     try {
-      const res = await fetch('/api/sessions/create', {
+      const res = await fetch(getApiUrl('/api/sessions/create'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quizId: selectedQuizId }),

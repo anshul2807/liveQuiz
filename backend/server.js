@@ -12,6 +12,8 @@ import { registerQuizSocketHandlers } from './sockets/quizSocketHandler.js';
 import quizRoutes from './routes/quizRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import challengeRoutes from './routes/challengeRoutes.js';
+import ideRoutes from './routes/ideRoutes.js';
 
 dotenv.config();
 
@@ -62,6 +64,8 @@ const io = new Server(server, {
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/challenges', challengeRoutes);
+app.use('/api/ide', ideRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

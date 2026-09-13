@@ -6,25 +6,45 @@ import { HomePage } from './pages/HomePage.jsx';
 import { AdminDashboard } from './pages/AdminDashboard.jsx';
 import { StudentJoinPage } from './pages/StudentJoinPage.jsx';
 import { QuizBuilderPage } from './pages/QuizBuilderPage.jsx';
+import { CodingLabPage } from './pages/CodingLabPage.jsx';
+import { MCQPracticePage } from './pages/MCQPracticePage.jsx';
+import { IDEPage } from './pages/IDEPage.jsx';
 import { AlertCircle, Clock } from 'lucide-react';
+
+// Route parsing helpers supporting both root ("/") and GitHub Pages subpath ("/liveQuiz/")
+const getNormalizedPath = (pathname) => {
+  if (!pathname) return '/';
+  return pathname.replace(/^\/liveQuiz(\/|$)/, '/');
+};
+
+const getViewFromPath = (pathname) => {
+  const path = getNormalizedPath(pathname);
+  if (path.startsWith('/join')) return 'join';
+  if (path === '/admin') return 'admin';
+  if (path === '/quiz-builder' || path === '/builder') return 'builder';
+  if (path === '/coding-lab' || path === '/challenges' || path === '/labs' || path === '/lab') return 'lab';
+  if (path === '/mcqs' || path === '/practice' || path === '/mcq') return 'mcqs';
+  if (path === '/ide' || path === '/compiler') return 'ide';
+  return 'home';
+};
+
+const getPinFromPath = (pathname) => {
+  const path = getNormalizedPath(pathname);
+  if (path.startsWith('/join/')) {
+    return path.replace('/join/', '').trim().toUpperCase();
+  }
+  return '';
+};
 
 // Inner App with context access
 const AppContent = () => {
   const [currentView, setCurrentView] = useState(() => {
     if (typeof window === 'undefined') return 'home';
-    const path = window.location.pathname;
-    if (path.startsWith('/join')) return 'join';
-    if (path === '/admin') return 'admin';
-    if (path === '/quiz-builder') return 'builder';
-    return 'home';
+    return getViewFromPath(window.location.pathname);
   });
   const [targetRoomCode, setTargetRoomCode] = useState(() => {
     if (typeof window === 'undefined') return '';
-    const path = window.location.pathname;
-    if (path.startsWith('/join/')) {
-      return path.replace('/join/', '').trim().toUpperCase();
-    }
-    return '';
+    return getPinFromPath(window.location.pathname);
   });
 
   const { errorMessage, infoMessage, isAdminAuthenticated } = useQuiz();
@@ -33,20 +53,9 @@ const AppContent = () => {
   useEffect(() => {
     const handleUrlRouting = () => {
       const path = window.location.pathname;
-
-      if (path.startsWith('/join/')) {
-        const code = path.replace('/join/', '').trim().toUpperCase();
-        setTargetRoomCode(code);
-        setCurrentView('join');
-      } else if (path === '/join') {
-        setCurrentView('join');
-      } else if (path === '/admin') {
-        setCurrentView('admin');
-      } else if (path === '/quiz-builder') {
-        setCurrentView('builder');
-      } else {
-        setCurrentView('home');
-      }
+      setCurrentView(getViewFromPath(path));
+      const pin = getPinFromPath(path);
+      if (pin) setTargetRoomCode(pin);
     };
 
     handleUrlRouting();
@@ -58,13 +67,20 @@ const AppContent = () => {
     setCurrentView(view);
     if (pin) setTargetRoomCode(pin);
 
+    // Maintain GitHub Pages basePath if currently on /liveQuiz
+    const hasLiveQuizPrefix = typeof window !== 'undefined' && window.location.pathname.startsWith('/liveQuiz');
+    const basePrefix = hasLiveQuizPrefix ? '/liveQuiz' : '';
+
     // Update browser URL history
     let newPath = '/';
     if (view === 'admin') newPath = '/admin';
     else if (view === 'builder') newPath = '/quiz-builder';
+    else if (view === 'lab') newPath = '/coding-lab';
+    else if (view === 'mcqs') newPath = '/mcqs';
+    else if (view === 'ide') newPath = '/ide';
     else if (view === 'join') newPath = pin ? `/join/${pin}` : '/join';
 
-    window.history.pushState({}, '', newPath);
+    window.history.pushState({}, '', `${basePrefix}${newPath}`);
   };
 
   return (
@@ -93,6 +109,9 @@ const AppContent = () => {
         {currentView === 'admin' && <AdminDashboard onNavigate={handleNavigate} />}
         {currentView === 'join' && <StudentJoinPage initialRoomCode={targetRoomCode} />}
         {currentView === 'builder' && <QuizBuilderPage onNavigate={handleNavigate} />}
+        {currentView === 'lab' && <CodingLabPage onNavigate={handleNavigate} />}
+        {currentView === 'mcqs' && <MCQPracticePage onNavigate={handleNavigate} />}
+        {currentView === 'ide' && <IDEPage onNavigate={handleNavigate} />}
       </main>
 
       {/* Footer */}

@@ -3,6 +3,7 @@ import { useQuiz } from '../context/QuizContext.jsx';
 import { AdminLogin } from '../components/AdminLogin.jsx';
 import { SYLLABUS_UNITS, QUIZ_QUESTIONS } from '../data/quizData.js';
 import { Plus, Trash2, CheckCircle2, Code, HelpCircle, Save, Filter, Search } from 'lucide-react';
+import { getApiUrl } from '../services/api.js';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 const OPTION_COLORS = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'];
@@ -107,7 +108,7 @@ export const QuizBuilderPage = ({ onNavigate }) => {
 
     setIsSaving(true);
     try {
-      const res = await fetch('/api/quizzes', {
+      const res = await fetch(getApiUrl('/api/quizzes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuiz } from '../context/QuizContext.jsx';
-import { Zap, Smartphone, Play, ShieldCheck, BarChart3, Code, Users, ArrowRight, Lock } from 'lucide-react';
+import { Zap, Smartphone, Play, ShieldCheck, BarChart3, Code, Users, ArrowRight, Lock, Code2, Sparkles, Cpu, BookOpen, Terminal } from 'lucide-react';
 
 export const HomePage = ({ onNavigate }) => {
   const { isAdminAuthenticated } = useQuiz();
@@ -35,39 +35,172 @@ export const HomePage = ({ onNavigate }) => {
         </p>
       </div>
 
-      {/* STUDENT JOIN CARD (PRIMARY FOCUS FOR REGULAR USERS) */}
-      <div className="max-w-md mx-auto mb-16">
-        <div className="bg-white dark:bg-slate-800/90 border-2 border-purple-400 dark:border-purple-500/50 rounded-3xl p-8 shadow-2xl backdrop-blur transition-colors">
-          <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-600/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
-              <Smartphone className="w-7 h-7" />
+      {/* ACTION CARDS: 1. LIVE QUIZ | 2. PRACTICE MCQS | 3. CODING LAB | 4. C/C++ IDE */}
+      <div className="max-w-7xl mx-auto mb-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        {/* CARD 1: LIVE GAME PIN ARENA */}
+        <div className="bg-white dark:bg-slate-800/90 border-2 border-purple-400 dark:border-purple-500/50 rounded-3xl p-5 shadow-xl backdrop-blur transition-colors flex flex-col justify-between">
+          <div>
+            <div className="text-center mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-purple-100 dark:bg-purple-600/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                Live Kahoot Arena
+              </span>
+              <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">Enter Game PIN</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                Join your instructor's arena with live sync & podium.
+              </p>
             </div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Enter Game PIN</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
-              Have a 6-digit room code from your host? Enter below to join!
-            </p>
+
+            <form onSubmit={handleJoinByPin} className="space-y-3">
+              <input
+                type="text"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value.toUpperCase())}
+                placeholder="6-DIGIT PIN"
+                maxLength={6}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-700 focus:border-purple-500 text-amber-600 dark:text-amber-400 font-mono text-center text-base font-black tracking-widest focus:outline-none transition-all placeholder:text-slate-400"
+              />
+              <button
+                type="submit"
+                disabled={!pinInput.trim()}
+                className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-purple-600/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              >
+                <Play className="w-3.5 h-3.5 fill-white" />
+                <span>Enter Arena</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* CARD 2: PRACTICE MCQS CENTER */}
+        <div className="bg-white dark:bg-slate-800/90 border-2 border-blue-400 dark:border-blue-500/50 rounded-3xl p-5 shadow-xl backdrop-blur transition-colors flex flex-col justify-between">
+          <div>
+            <div className="text-center mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                Self-Paced & Timed
+              </span>
+              <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">Practice MCQs</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                225 Questions across Units I, II & III with answers & mock tests.
+              </p>
+            </div>
+
+            <div className="space-y-1 mb-4 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
+                <span>Unit I: Concepts</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">75 Qs</span>
+              </div>
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
+                <span>Unit II: Pointers</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">75 Qs</span>
+              </div>
+              <div className="flex items-center justify-between py-0.5">
+                <span>Unit III: Streams</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">75 Qs</span>
+              </div>
+            </div>
           </div>
 
-          <form onSubmit={handleJoinByPin} className="space-y-4">
-            <input
-              type="text"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value.toUpperCase())}
-              placeholder="ENTER 6-DIGIT PIN"
-              maxLength={6}
-              autoFocus
-              className="w-full px-4 py-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-700 focus:border-purple-500 text-amber-600 dark:text-amber-400 font-mono text-center text-2xl font-black tracking-widest focus:outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
-            />
-            <button
-              type="submit"
-              disabled={!pinInput.trim()}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-base shadow-xl shadow-purple-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-            >
-              <Play className="w-5 h-5 fill-white" />
-              <span>Enter Arena</span>
-            </button>
-          </form>
+          <button
+            onClick={() => onNavigate('mcqs')}
+            className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Open MCQs</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
+
+        {/* CARD 3: C++ GUIDED CODING LAB */}
+        <div className="bg-white dark:bg-slate-800/90 border-2 border-emerald-400 dark:border-emerald-500/50 rounded-3xl p-5 shadow-xl backdrop-blur transition-colors flex flex-col justify-between">
+          <div>
+            <div className="text-center mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                <Code2 className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                6 Curriculum Labs
+              </span>
+              <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">C++ Hands-On Lab</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                Structured test-driven problems (3 Easy, 2 Med, 1 Hard).
+              </p>
+            </div>
+
+            <div className="space-y-1 mb-4 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
+                <span>Unit 1: Classes</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">2 Easy</span>
+              </div>
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
+                <span>Unit 2: Pointers</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">1 Easy, 1 Med</span>
+              </div>
+              <div className="flex items-center justify-between py-0.5">
+                <span>Unit 3: Streams</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">1 Med, 1 Hard</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onNavigate('lab')}
+            className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Open Lab</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* CARD 4: STANDALONE C / C++ WEB IDE */}
+        <div className="bg-white dark:bg-slate-800/90 border-2 border-amber-400 dark:border-amber-500/50 rounded-3xl p-5 shadow-xl backdrop-blur transition-colors flex flex-col justify-between">
+          <div>
+            <div className="text-center mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-600/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                <Terminal className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                C & C++ Playground
+              </span>
+              <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">C & C++ Web IDE</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                Custom stdin, virtual files, and file stream outputs.
+              </p>
+            </div>
+
+            <div className="space-y-1 mb-4 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
+                <span>Languages</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">C17 & C++17</span>
+              </div>
+              <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
+                <span>File Streams</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">fstream / fopen</span>
+              </div>
+              <div className="flex items-center justify-between py-0.5">
+                <span>Input / Output</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">Custom Stdin</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onNavigate('ide')}
+            className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-extrabold text-xs shadow-lg shadow-amber-500/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Launch Web IDE</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
       </div>
 
       {/* ADMIN SHORTCUT (ONLY VISIBLE IF ADMIN IS LOGGED IN) */}
@@ -120,14 +253,24 @@ export const HomePage = ({ onNavigate }) => {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 shadow-sm transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+          <div 
+            onClick={() => onNavigate('lab')}
+            className="cursor-pointer bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 hover:border-purple-400 dark:hover:border-purple-500 rounded-2xl p-6 shadow-sm transition-all hover:scale-[1.02] group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Code className="w-5 h-5" />
             </div>
-            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">C++ Code Challenges</h4>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Analyze output predictions, memory hazard pitfalls, pointer arithmetic, and OOP designs.
+            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center justify-between">
+              <span>C++ Code Challenges</span>
+              <ArrowRight className="w-4 h-4 text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </h4>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+              Hands-on stream I/O, binary in-place updates, POD persistence, initializer lists, and RAII safety.
             </p>
+            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+              <span>Open 6 Challenges & MCQs</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </div>
 
         </div>
