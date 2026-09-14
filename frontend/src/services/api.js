@@ -8,7 +8,9 @@ export const getBackendUrl = () => {
   if (custom && typeof custom === 'string') {
     return custom.trim().replace(/\/+$/, '');
   }
-  return '';
+  return import.meta.env.PROD
+    ? 'https://livequiz-backend-175868755890.asia-south1.run.app'
+    : '';
 };
 
 export const getApiUrl = (endpoint) => {

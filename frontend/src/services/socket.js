@@ -6,9 +6,10 @@ export const getSocket = () => {
   if (!socketInstance) {
     // If backend port is 5001 and frontend is 5173, point directly or use proxy
     const isDevelopment = import.meta.env.DEV;
+    const prodFallbackUrl = 'https://livequiz-backend-175868755890.asia-south1.run.app';
     const backendUrl = import.meta.env.VITE_BACKEND_URL || (isDevelopment 
       ? `http://${window.location.hostname}:5001`
-      : window.location.origin);
+      : prodFallbackUrl);
 
     socketInstance = io(backendUrl, {
       autoConnect: true,
