@@ -253,6 +253,7 @@ export const IDEPage = ({ onNavigate }) => {
   const [activeConsoleTab, setActiveConsoleTab] = useState('terminal'); // 'terminal' | 'stdin' | 'outputFiles'
   const [copied, setCopied] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // 'saved' | null
+  const [mobileIDETab, setMobileIDETab] = useState('editor'); // 'editor' | 'files'
 
   // Autocompletion State
   const [suggestions, setSuggestions] = useState([]);
@@ -909,11 +910,37 @@ export const IDEPage = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* Mobile View Switcher (visible on screens < lg) */}
+      <div className="flex lg:hidden items-center p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 mb-5 shadow-xs">
+        <button
+          onClick={() => setMobileIDETab('editor')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileIDETab === 'editor'
+              ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Terminal className="w-3.5 h-3.5" />
+          <span>Editor & Terminal</span>
+        </button>
+        <button
+          onClick={() => setMobileIDETab('files')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileIDETab === 'files'
+              ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          <span>Workspace Files ({workspaceFiles.length})</span>
+        </button>
+      </div>
+
       {/* Main Grid: Left Files Panel (4 Cols) + Right Editor & Console (8 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Column: Workspace Files & Quick Templates (4 Cols) */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className={`lg:col-span-4 space-y-4 ${mobileIDETab === 'files' ? 'block' : 'hidden lg:block'}`}>
           
           {/* Workspace Files Card */}
           <div className="border rounded-3xl p-5 shadow-sm transition-colors bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/80 shadow-slate-200/50 dark:shadow-none">
@@ -1059,7 +1086,7 @@ export const IDEPage = ({ onNavigate }) => {
         </div>
 
         {/* Right Column: Code Editor & Output Consoles (8 Cols) */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className={`lg:col-span-8 space-y-4 ${mobileIDETab === 'editor' ? 'block' : 'hidden lg:block'}`}>
           
           {/* Code Editor Container */}
           <div className="relative border rounded-3xl shadow-xl overflow-hidden flex flex-col transition-colors bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-slate-200/60 dark:shadow-purple-950/20">

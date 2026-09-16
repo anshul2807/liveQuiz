@@ -6,6 +6,8 @@ import {
   advanceQuestion,
   submitAnswer,
   extendTimer,
+  endCurrentQuestion,
+  finishQuiz,
 } from '../services/roomManager.js';
 
 export const registerQuizSocketHandlers = (io) => {
@@ -144,6 +146,26 @@ export const registerQuizSocketHandlers = (io) => {
       try {
         const code = (roomCode || currentRoomCode)?.trim().toUpperCase();
         extendTimer(code, seconds, io);
+      } catch (err) {
+        socket.emit('error_message', { message: err.message });
+      }
+    });
+
+    // 3.2. Admin Concludes Active Question Immediately (revealing answers and responses)
+    socket.on('admin_conclude_question', ({ roomCode }) => {
+      try {
+        const code = (roomCode || currentRoomCode)?.trim().toUpperCase();
+        endCurrentQuestion(code, io);
+      } catch (err) {
+        socket.emit('error_message', { message: err.message });
+      }
+    });
+
+    // 3.3. Admin Ends Entire Quiz Early (showing final podium and rankings)
+    socket.on('admin_finish_quiz', ({ roomCode }) => {
+      try {
+        const code = (roomCode || currentRoomCode)?.trim().toUpperCase();
+        finishQuiz(code, io);
       } catch (err) {
         socket.emit('error_message', { message: err.message });
       }

@@ -354,7 +354,7 @@ export const StudentView = ({ initialRoomCode }) => {
                     {currentQuestion.language === 'c' ? 'C17' : currentQuestion.language === 'cpp' ? 'C++20' : 'C / C++'}
                   </span>
                 </div>
-                <pre className="p-4 sm:p-5 text-xs sm:text-sm font-mono text-indigo-950 dark:text-emerald-300 overflow-x-auto whitespace-pre leading-relaxed bg-white/60 dark:bg-transparent max-h-64">
+                <pre className="p-3.5 sm:p-5 text-xs sm:text-sm font-mono text-indigo-950 dark:text-emerald-300 overflow-x-auto whitespace-pre leading-relaxed bg-white/60 dark:bg-transparent max-h-40 sm:max-h-60">
                   <code>{currentQuestion.code}</code>
                 </pre>
               </div>
@@ -365,40 +365,40 @@ export const StudentView = ({ initialRoomCode }) => {
 
       {/* Answer Locked Overlay / Indicator */}
       {myAnswer !== null ? (
-        <div className="my-auto bg-white dark:bg-slate-800/95 border-2 border-purple-500/60 rounded-3xl p-8 text-center shadow-2xl backdrop-blur transition-all">
-          <div className="w-16 h-16 rounded-2xl bg-purple-100 dark:bg-purple-600/30 text-purple-600 dark:text-purple-300 flex items-center justify-center mx-auto mb-3 shadow-inner">
-            <CheckCircle2 className="w-10 h-10 animate-bounce-short" />
+        <div className="my-auto bg-white dark:bg-slate-800/95 border-2 border-purple-500/60 rounded-3xl p-6 sm:p-8 text-center shadow-2xl backdrop-blur transition-all">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-100 dark:bg-purple-600/30 text-purple-600 dark:text-purple-300 flex items-center justify-center mx-auto mb-3 shadow-inner">
+            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 animate-bounce-short" />
           </div>
-          <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1">Answer Locked In!</h3>
-          <p className="text-slate-600 dark:text-slate-300 text-sm font-medium mb-4">
-            You picked option <strong className="text-purple-600 dark:text-purple-400 text-base">{OPTION_LABELS[myAnswer.selectedOptionIndex]} ({OPTION_SYMBOLS[myAnswer.selectedOptionIndex]})</strong>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1">Answer Locked In!</h3>
+          <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium mb-4">
+            You picked option <strong className="text-purple-600 dark:text-purple-400 text-sm sm:text-base">{OPTION_LABELS[myAnswer.selectedOptionIndex]} ({OPTION_SYMBOLS[myAnswer.selectedOptionIndex]})</strong>
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 text-xs font-bold animate-pulse">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 text-xs font-bold animate-pulse">
             <Clock className="w-3.5 h-3.5" />
             <span>Waiting for all submissions & timer...</span>
           </div>
         </div>
       ) : (
         /* 4 Highly Polished Kahoot Option Touch Targets (A, B, C, D) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 my-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 my-2">
           {OPTION_LABELS.map((label, idx) => (
             <button
               key={idx}
               onClick={() => submitMyAnswer(idx)}
-              className="group relative rounded-2xl p-4 sm:p-5 flex items-center space-x-4 shadow-xl border-2 border-white/20 hover:border-white/60 focus:border-white focus:outline-none transition-all transform active:scale-[0.98] hover:scale-[1.01] overflow-hidden text-left"
+              className="group relative rounded-2xl p-3.5 sm:p-5 flex items-center space-x-3.5 sm:space-x-4 shadow-xl border-2 border-white/20 hover:border-white/60 focus:border-white focus:outline-none transition-all transform active:scale-[0.98] hover:scale-[1.01] overflow-hidden text-left"
               style={{ backgroundColor: OPTION_COLORS[idx] }}
             >
               {/* Option Icon Symbol Circle */}
-              <div className="w-12 h-12 rounded-xl bg-black/25 flex items-center justify-center text-white text-2xl font-black flex-shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-black/25 flex items-center justify-center text-white text-xl sm:text-2xl font-black flex-shrink-0 shadow-inner group-hover:scale-110 transition-transform">
                 {OPTION_SYMBOLS[idx]}
               </div>
 
               {/* Option Label and Text */}
               <div className="flex-1 min-w-0">
-                <div className="text-white/80 text-[11px] font-black uppercase tracking-wider mb-0.5">
+                <div className="text-white/80 text-[10px] sm:text-[11px] font-black uppercase tracking-wider mb-0.5">
                   Option {label}
                 </div>
-                <div className="text-white font-black text-base sm:text-lg leading-snug line-clamp-2">
+                <div className="text-white font-black text-sm sm:text-lg leading-snug line-clamp-2">
                   {currentQuestion?.options ? currentQuestion.options[idx] : `Option ${label}`}
                 </div>
               </div>

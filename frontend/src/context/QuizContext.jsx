@@ -254,6 +254,16 @@ export const QuizProvider = ({ children }) => {
     s.emit('admin_extend_timer', { roomCode, seconds });
   }, [roomCode]);
 
+  const concludeQuestion = useCallback((targetRoomCode) => {
+    const s = getSocket();
+    s.emit('admin_conclude_question', { roomCode: targetRoomCode || roomCode });
+  }, [roomCode]);
+
+  const finishQuizEarly = useCallback((targetRoomCode) => {
+    const s = getSocket();
+    s.emit('admin_finish_quiz', { roomCode: targetRoomCode || roomCode });
+  }, [roomCode]);
+
   const resetQuizState = useCallback(() => {
     setRole(null);
     setRoomCode('');
@@ -315,6 +325,8 @@ export const QuizProvider = ({ children }) => {
     loginAdmin,
     logoutAdmin,
     extendTimer,
+    concludeQuestion,
+    finishQuizEarly,
     joinAsAdmin,
     joinAsStudent,
     startQuiz,

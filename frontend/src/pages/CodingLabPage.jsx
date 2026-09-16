@@ -27,7 +27,8 @@ import {
   Zap,
   ShieldAlert,
   HelpCircle,
-  CheckCheck
+  CheckCheck,
+  BookOpen
 } from 'lucide-react';
 import { getApiUrl } from '../services/api.js';
 
@@ -40,6 +41,7 @@ export const CodingLabPage = ({ onNavigate }) => {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('cpp'); // 'cpp' | 'c'
   const [selectedChallengeId, setSelectedChallengeId] = useState('oops-u1-p1');
+  const [mobileLabTab, setMobileLabTab] = useState('editor'); // 'specs' | 'editor'
   
   // Persist and load user lab code directly in LocalStorage
   const [userCode, setUserCode] = useState(() => {
@@ -595,11 +597,37 @@ export const CodingLabPage = ({ onNavigate }) => {
         })}
       </div>
 
-      {/* Problem Workspace (Split 2 Columns) */}
+      {/* Mobile View Toggle (visible only on screens < lg) */}
+      <div className="flex lg:hidden items-center p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 mb-5 shadow-xs">
+        <button
+          onClick={() => setMobileLabTab('specs')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileLabTab === 'specs'
+              ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>Problem Description</span>
+        </button>
+        <button
+          onClick={() => setMobileLabTab('editor')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileLabTab === 'editor'
+              ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Code2 className="w-3.5 h-3.5" />
+          <span>Code Editor & Terminal</span>
+        </button>
+      </div>
+
+      {/* Problem Workspace (Split 2 Columns on desktop, toggled on mobile) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Column: Problem Specs & Invariants (5 Cols) */}
-        <div className="lg:col-span-5 space-y-5">
+        <div className={`lg:col-span-5 space-y-5 ${mobileLabTab === 'specs' ? 'block' : 'hidden lg:block'}`}>
           
           <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-3">
@@ -693,7 +721,7 @@ export const CodingLabPage = ({ onNavigate }) => {
         </div>
 
         {/* Right Column: Code Editor & Execution Runner (7 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className={`lg:col-span-7 space-y-4 ${mobileLabTab === 'editor' ? 'block' : 'hidden lg:block'}`}>
           
           <div className={`border rounded-3xl shadow-xl overflow-hidden flex flex-col transition-colors ${
             isDark

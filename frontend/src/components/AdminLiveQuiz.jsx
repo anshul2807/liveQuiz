@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useQuiz } from '../context/QuizContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { Clock, Plus, CheckCircle2, XCircle, ArrowRight, Trophy, Sparkles, HelpCircle, Code } from 'lucide-react';
+import { 
+  Clock, Plus, CheckCircle2, XCircle, ArrowRight, Trophy, Sparkles, 
+  HelpCircle, Code, Square, AlertTriangle, X 
+} from 'lucide-react';
 
 const OPTION_COLORS = ['#e21b3c', '#1368ce', '#d89e00', '#26890c']; // Red, Blue, Yellow, Green
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
@@ -21,9 +24,12 @@ export const AdminLiveQuiz = () => {
     participants,
     nextQuestion,
     extendTimer,
+    concludeQuestion,
+    finishQuizEarly,
   } = useQuiz();
   const { isDark } = useTheme();
   const [extendingTime, setExtendingTime] = useState(null);
+  const [showEndModal, setShowEndModal] = useState(false);
 
   if (!currentQuestion) {
     return (
@@ -62,65 +68,92 @@ export const AdminLiveQuiz = () => {
     setTimeout(() => setExtendingTime(null), 1000);
   };
 
+  const handleConfirmEndQuiz = () => {
+    setShowEndModal(false);
+    finishQuizEarly(roomCode);
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl px-6 py-4 mb-6 backdrop-blur shadow-lg transition-colors">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 sm:px-6 sm:py-4 mb-6 backdrop-blur shadow-lg transition-colors">
+        <div className="flex items-center justify-between sm:justify-start space-x-3">
           <span className="px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/80 text-purple-700 dark:text-purple-300 font-bold text-xs uppercase tracking-wider border border-purple-300 dark:border-purple-600/40">
             Question {currentQuestion.questionIndex + 1} of {currentQuestion.totalQuestions}
           </span>
           <span className="text-slate-300 dark:text-slate-600 text-sm hidden sm:inline">|</span>
-          <span className="text-slate-600 dark:text-slate-300 font-semibold text-sm">PIN: <strong className="font-mono text-purple-600 dark:text-purple-400">{roomCode}</strong></span>
+          <span className="text-slate-600 dark:text-slate-300 font-semibold text-xs sm:text-sm">PIN: <strong className="font-mono text-purple-600 dark:text-purple-400">{roomCode}</strong></span>
         </div>
 
-        {/* Real-Time Answer Counter + Synchronized Timer + TIMER EXTEND BUTTONS */}
-        <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
+        {/* Real-Time Answer Counter + Synchronized Timer + TIMER EXTEND BUTTONS + CONCLUDE + END QUIZ */}
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3">
           
           {/* Submissions counter */}
           <div className="flex items-center space-x-2">
             <div className="text-right">
-              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Submissions</div>
-              <div className="text-lg font-black text-slate-900 dark:text-white">
-                {submissionProgress.submitted} <span className="text-slate-400 dark:text-slate-500 font-normal">/ {submissionProgress.total}</span>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Submissions</div>
+              <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                {submissionProgress.submitted} <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">/ {submissionProgress.total}</span>
               </div>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-purple-600 dark:text-purple-400">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-purple-600 dark:text-purple-400">
               {answeredPercent}%
             </div>
           </div>
 
           {/* Synchronized Server Timer Badge */}
-          <div className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl border transition-colors ${
+          <div className={`flex items-center space-x-1.5 px-3 py-1 rounded-xl border transition-colors ${
             remainingTime <= 5 && !isResultPhase
               ? 'bg-rose-100 dark:bg-rose-950/80 border-rose-300 dark:border-rose-600 text-rose-700 dark:text-rose-300 animate-pulse'
               : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
           }`}>
-            <Clock className={`w-4 h-4 ${remainingTime <= 5 && !isResultPhase ? 'text-rose-500' : 'text-purple-500 dark:text-purple-400'}`} />
-            <span className="text-xl font-mono font-black">{remainingTime}s</span>
+            <Clock className={`w-3.5 h-3.5 ${remainingTime <= 5 && !isResultPhase ? 'text-rose-500' : 'text-purple-500 dark:text-purple-400'}`} />
+            <span className="text-lg sm:text-xl font-mono font-black">{remainingTime}s</span>
           </div>
 
           {/* TIMER EXTEND BUTTONS (ADMIN FEATURE) */}
           {!isResultPhase && (
-            <div className="flex items-center space-x-1.5 bg-purple-50 dark:bg-slate-900/90 p-1 rounded-xl border border-purple-200 dark:border-purple-800/60 shadow-sm">
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-purple-600 dark:text-purple-400 px-1">
-                Extend:
+            <div className="flex items-center space-x-1 bg-purple-50 dark:bg-slate-900/90 p-1 rounded-xl border border-purple-200 dark:border-purple-800/60 shadow-xs">
+              <span className="text-[9px] uppercase tracking-wider font-extrabold text-purple-600 dark:text-purple-400 px-0.5 hidden xs:inline">
+                +Timer:
               </span>
-              {[10, 20, 30].map((sec) => (
+              {[10, 20].map((sec) => (
                 <button
                   key={sec}
                   onClick={() => handleExtend(sec)}
                   disabled={extendingTime !== null}
                   title={`Add +${sec}s to countdown timer`}
-                  className="px-2 py-1 rounded-lg bg-white dark:bg-purple-950/80 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-600 text-purple-700 dark:text-purple-300 text-xs font-black border border-purple-200 dark:border-purple-700/60 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-0.5"
+                  className="px-1.5 py-1 rounded-lg bg-white dark:bg-purple-950/80 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-600 text-purple-700 dark:text-purple-300 text-xs font-black border border-purple-200 dark:border-purple-700/60 transition-all flex items-center gap-0.5"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-2.5 h-2.5" />
                   <span>{sec}s</span>
                 </button>
               ))}
             </div>
           )}
+
+          {/* CONCLUDE QUESTION BUTTON (ADMIN FEATURE) */}
+          {!isResultPhase && (
+            <button
+              onClick={() => concludeQuestion(roomCode)}
+              title="Conclude active question immediately and reveal answers"
+              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black shadow-md flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Conclude</span>
+            </button>
+          )}
+
+          {/* END QUIZ BUTTON (ADMIN FEATURE) */}
+          <button
+            onClick={() => setShowEndModal(true)}
+            title="End entire quiz early and reveal final podium"
+            className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 text-xs font-extrabold flex items-center gap-1 transition-all hover:scale-105 active:scale-95"
+          >
+            <Square className="w-3 h-3 fill-rose-500 text-rose-500" />
+            <span className="hidden sm:inline">End Quiz</span>
+          </button>
 
         </div>
       </div>
@@ -298,11 +331,19 @@ export const AdminLiveQuiz = () => {
             </div>
           )}
 
-          {/* Advance Navigation Trigger */}
-          <div className="flex justify-end pt-2">
+          {/* Advance Navigation & End Quiz Triggers */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <button
+              onClick={() => setShowEndModal(true)}
+              className="px-4 py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all hover:scale-102 active:scale-98"
+            >
+              <Square className="w-4 h-4 fill-rose-600 text-rose-600 dark:fill-rose-400 dark:text-rose-400" />
+              <span>End Quiz Early</span>
+            </button>
+
             <button
               onClick={() => nextQuestion(roomCode)}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-lg shadow-2xl shadow-purple-600/40 flex items-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-sm sm:text-lg shadow-2xl shadow-purple-600/40 flex items-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all ml-auto"
             >
               <span>
                 {currentQuestion.questionIndex + 1 >= currentQuestion.totalQuestions
@@ -316,34 +357,48 @@ export const AdminLiveQuiz = () => {
         </div>
       ) : null}
 
-      {/* 4 Kahoot High-Contrast Option Blocks */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* 4 Kahoot High-Contrast Option Blocks (Clickable by Admin during Active phase to immediately conclude) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
         {currentQuestion.options.map((optionText, idx) => {
           const isCorrect = isResultPhase && idx === correctIndex;
 
           return (
             <div
               key={idx}
-              className={`relative rounded-2xl p-5 sm:p-6 flex items-center space-x-4 shadow-xl border-2 transition-all ${
+              onClick={() => {
+                if (!isResultPhase) {
+                  concludeQuestion(roomCode);
+                }
+              }}
+              title={!isResultPhase ? "Click to conclude active question immediately" : undefined}
+              className={`relative rounded-2xl p-4 sm:p-6 flex items-center space-x-3.5 sm:space-x-4 shadow-xl border-2 transition-all ${
                 isResultPhase
                   ? isCorrect
                     ? 'border-emerald-400 ring-4 ring-emerald-500/40 brightness-110'
                     : 'border-transparent opacity-40 grayscale-[40%]'
-                  : 'border-white/20 hover:border-white/50'
+                  : 'cursor-pointer border-white/20 hover:border-white hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] group'
               }`}
               style={{ backgroundColor: OPTION_COLORS[idx] }}
             >
               {/* Option Icon Symbol */}
-              <div className="w-12 h-12 rounded-xl bg-black/25 flex items-center justify-center text-white text-2xl font-black flex-shrink-0 shadow-inner">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-black/25 flex items-center justify-center text-white text-xl sm:text-2xl font-black flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform">
                 {OPTION_SYMBOLS[idx]}
               </div>
 
               {/* Option Text & Label */}
               <div className="flex-1 min-w-0">
-                <div className="text-white/80 text-xs font-black uppercase tracking-wider mb-0.5">
-                  Option {OPTION_LABELS[idx]}
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <div className="text-white/80 text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                    Option {OPTION_LABELS[idx]}
+                  </div>
+                  {!isResultPhase && (
+                    <span className="text-[10px] bg-black/30 text-white/90 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1 border border-white/20 shadow-xs">
+                      <CheckCircle2 className="w-2.5 h-2.5" />
+                      <span className="hidden xs:inline">Conclude</span>
+                    </span>
+                  )}
                 </div>
-                <div className="text-white font-bold text-lg sm:text-xl leading-snug">
+                <div className="text-white font-bold text-base sm:text-xl leading-snug">
                   {optionText}
                 </div>
               </div>
@@ -352,12 +407,12 @@ export const AdminLiveQuiz = () => {
               {isResultPhase && (
                 <div className="flex-shrink-0">
                   {isCorrect ? (
-                    <div className="w-10 h-10 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-lg">
-                      <CheckCircle2 className="w-7 h-7" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-lg">
+                      <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7" />
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-black/40 text-rose-300 flex items-center justify-center">
-                      <XCircle className="w-6 h-6" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/40 text-rose-300 flex items-center justify-center">
+                      <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                   )}
                 </div>
@@ -366,6 +421,37 @@ export const AdminLiveQuiz = () => {
           );
         })}
       </div>
+
+      {/* Confirmation Modal for Ending Quiz */}
+      {showEndModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 max-w-md w-full shadow-2xl animate-fadeIn">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white text-center mb-2">
+              End Live Quiz Session?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center mb-6 leading-relaxed">
+              Are you sure you want to end this live quiz now? All remaining questions will be closed and the final podium standings will be calculated and displayed immediately.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowEndModal(false)}
+                className="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                Keep Playing
+              </button>
+              <button
+                onClick={handleConfirmEndQuiz}
+                className="py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-lg shadow-rose-600/30 transition-all hover:scale-102 active:scale-98"
+              >
+                Yes, End Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
