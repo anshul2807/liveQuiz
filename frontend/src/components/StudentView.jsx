@@ -346,9 +346,13 @@ export const StudentView = ({ initialRoomCode }) => {
                 <div className="bg-slate-200/90 dark:bg-slate-900 px-4 py-2 flex items-center justify-between border-b border-slate-300 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 font-mono">
                   <div className="flex items-center space-x-2">
                     <Code className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                    <span className="font-semibold">C++ Code Snippet</span>
+                    <span className="font-semibold">
+                      {currentQuestion.language === 'c' ? 'C Code Snippet' : currentQuestion.language === 'cpp' ? 'C++ Code Snippet' : 'Code Snippet (C/C++)'}
+                    </span>
                   </div>
-                  <span className="text-[11px] text-slate-500 font-mono font-bold">C++20</span>
+                  <span className="text-[11px] text-slate-500 font-mono font-bold">
+                    {currentQuestion.language === 'c' ? 'C17' : currentQuestion.language === 'cpp' ? 'C++20' : 'C / C++'}
+                  </span>
                 </div>
                 <pre className="p-4 sm:p-5 text-xs sm:text-sm font-mono text-indigo-950 dark:text-emerald-300 overflow-x-auto whitespace-pre leading-relaxed bg-white/60 dark:bg-transparent max-h-64">
                   <code>{currentQuestion.code}</code>

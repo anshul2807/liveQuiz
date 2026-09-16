@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CODING_CHALLENGES } from '../data/codingChallenges.js';
 import { useQuiz } from '../context/QuizContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import {
   Code2,
   Play,
@@ -32,30 +33,36 @@ import { getApiUrl } from '../services/api.js';
 
 export const CodingLabPage = ({ onNavigate }) => {
   const { isAdminAuthenticated, adminUser } = useQuiz();
+  const { isDark } = useTheme();
 
+  const [selectedSubject, setSelectedSubject] = useState('oops'); // 'oops' | 'dsa'
   const [selectedUnit, setSelectedUnit] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
-  const [selectedChallengeId, setSelectedChallengeId] = useState(CODING_CHALLENGES[0].id);
-  const [userCode, setUserCode] = useState({});
-  const [copied, setCopied] = useState(false);
-  const [activeTestCaseTab, setActiveTestCaseTab] = useState(0);
-
-  // Editor Light & Dark Mode state (persisted in localStorage)
-  const [editorTheme, setEditorTheme] = useState(() => {
+  const [selectedLanguage, setSelectedLanguage] = useState('cpp'); // 'cpp' | 'c'
+  const [selectedChallengeId, setSelectedChallengeId] = useState('oops-u1-p1');
+  
+  // Persist and load user lab code directly in LocalStorage
+  const [userCode, setUserCode] = useState(() => {
     try {
-      const saved = localStorage.getItem('code_editor_theme');
-      if (saved === 'dark' || saved === 'light') return saved;
-    } catch {}
-    return 'dark';
+      const saved = localStorage.getItem('livequiz_lab_user_code');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Failed to load lab code from localStorage', e);
+    }
+    return {};
   });
 
-  const toggleEditorTheme = () => {
-    const nextTheme = editorTheme === 'dark' ? 'light' : 'dark';
-    setEditorTheme(nextTheme);
+  // Sync userCode to LocalStorage automatically whenever code changes
+  useEffect(() => {
     try {
-      localStorage.setItem('code_editor_theme', nextTheme);
-    } catch {}
-  };
+      localStorage.setItem('livequiz_lab_user_code', JSON.stringify(userCode));
+    } catch (e) {
+      console.warn('Failed to save lab code to localStorage', e);
+    }
+  }, [userCode]);
+
+  const [copied, setCopied] = useState(false);
+  const [activeTestCaseTab, setActiveTestCaseTab] = useState(0);
 
   // Admin-Only Reference Solution state
   const [showSolution, setShowSolution] = useState(false);
@@ -64,7 +71,7 @@ export const CodingLabPage = ({ onNavigate }) => {
   const [solutionError, setSolutionError] = useState(null);
   const [showAdminModal, setShowAdminModal] = useState(false);
 
-  // Real C++ Compiler & Test Runner Execution state
+  // Real C/C++ Compiler & Test Runner Execution state
   const [isRunning, setIsRunning] = useState(false);
   const [testResults, setTestResults] = useState(null); // { passedAll: bool, compiled: bool, compilerError: string, cases: [...] }
   const [consoleOutput, setConsoleOutput] = useState('');
@@ -75,7 +82,14 @@ export const CodingLabPage = ({ onNavigate }) => {
 
   // Filter challenges directly on frontend (instantaneous, 0 backend API calls)
   const filteredChallenges = CODING_CHALLENGES.filter(c => {
-    if (selectedUnit !== 'all' && c.unitId !== selectedUnit) return false;
+    if (selectedSubject !== 'all' && c.subjectId !== selectedSubject) return false;
+    if (selectedUnit !== 'all') {
+      const match = c.unitId === selectedUnit ||
+                    (selectedUnit === 'unit1' && c.unitId === 'dsa_unit1') ||
+                    (selectedUnit === 'unit2' && c.unitId === 'dsa_unit2') ||
+                    (selectedUnit === 'unit3' && c.unitId === 'dsa_unit3');
+      if (!match) return false;
+    }
     if (selectedDifficulty !== 'all' && c.difficulty !== selectedDifficulty) return false;
     return true;
   });
@@ -83,12 +97,21 @@ export const CodingLabPage = ({ onNavigate }) => {
   // Current challenge
   const challenge = CODING_CHALLENGES.find(c => c.id === selectedChallengeId) || filteredChallenges[0] || CODING_CHALLENGES[0];
 
-  // Initialize starter code
+  // Helper to extract starter code for the active language
+  const getStarterCode = (ch, lang) => {
+    if (!ch || !ch.starterCode) return '';
+    if (typeof ch.starterCode === 'string') return ch.starterCode;
+    return ch.starterCode[lang] || ch.starterCode['cpp'] || '';
+  };
+
+  const codeKey = `${challenge.id}_${selectedLanguage}`;
+
+  // Initialize starter code when challenge or language changes
   useEffect(() => {
-    if (!userCode[challenge.id]) {
+    if (!userCode[codeKey]) {
       setUserCode(prev => ({
         ...prev,
-        [challenge.id]: challenge.starterCode
+        [codeKey]: getStarterCode(challenge, selectedLanguage)
       }));
     }
     setTestResults(null);
@@ -96,9 +119,19 @@ export const CodingLabPage = ({ onNavigate }) => {
     setShowSolution(false);
     setSolutionError(null);
     setActiveTestCaseTab(0);
-  }, [challenge.id]);
+  }, [challenge.id, selectedLanguage]);
 
-  const currentCode = userCode[challenge.id] || challenge.starterCode;
+  // When subject changes, pick first challenge of that subject if current challenge doesn't belong
+  const handleSubjectChange = (newSubject) => {
+    setSelectedSubject(newSubject);
+    setSelectedUnit('all');
+    const firstMatching = CODING_CHALLENGES.find(c => c.subjectId === newSubject);
+    if (firstMatching) {
+      setSelectedChallengeId(firstMatching.id);
+    }
+  };
+
+  const currentCode = userCode[codeKey] || getStarterCode(challenge, selectedLanguage);
 
   // Calculate line numbers
   const lineCount = (currentCode.match(/\n/g) || []).length + 1;
@@ -114,7 +147,7 @@ export const CodingLabPage = ({ onNavigate }) => {
     const val = e.target.value;
     setUserCode(prev => ({
       ...prev,
-      [challenge.id]: val
+      [codeKey]: val
     }));
   };
 
@@ -123,6 +156,50 @@ export const CodingLabPage = ({ onNavigate }) => {
     if (!textarea) return;
 
     const cursor = textarea.selectionStart;
+
+    // Smart Enter key indentation
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const lineStart = currentCode.lastIndexOf('\n', start - 1) + 1;
+      const currentLine = currentCode.substring(lineStart, start);
+      const indentMatch = currentLine.match(/^[ \t]*/);
+      const currentIndent = indentMatch ? indentMatch[0] : '';
+
+      const trimmedBefore = currentLine.trimEnd();
+      const isOpeningBrace = trimmedBefore.endsWith('{');
+      const nextChar = currentCode[end];
+
+      if (isOpeningBrace && nextChar === '}') {
+        const extraIndent = '    ';
+        const insertText = '\n' + currentIndent + extraIndent + '\n' + currentIndent;
+        const newCode = currentCode.substring(0, start) + insertText + currentCode.substring(end);
+        setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
+        const targetPos = start + 1 + currentIndent.length + extraIndent.length;
+        setTimeout(() => {
+          textarea.setSelectionRange(targetPos, targetPos);
+        }, 0);
+      } else if (isOpeningBrace) {
+        const extraIndent = '    ';
+        const insertText = '\n' + currentIndent + extraIndent;
+        const newCode = currentCode.substring(0, start) + insertText + currentCode.substring(end);
+        setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
+        const targetPos = start + insertText.length;
+        setTimeout(() => {
+          textarea.setSelectionRange(targetPos, targetPos);
+        }, 0);
+      } else {
+        const insertText = '\n' + currentIndent;
+        const newCode = currentCode.substring(0, start) + insertText + currentCode.substring(end);
+        setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
+        const targetPos = start + insertText.length;
+        setTimeout(() => {
+          textarea.setSelectionRange(targetPos, targetPos);
+        }, 0);
+      }
+      return;
+    }
 
     // Tab key indentation (4 spaces)
     if (e.key === 'Tab') {
@@ -134,14 +211,14 @@ export const CodingLabPage = ({ onNavigate }) => {
         const lineStart = currentCode.lastIndexOf('\n', start - 1) + 1;
         if (currentCode.slice(lineStart, lineStart + 4) === '    ') {
           const newCode = currentCode.slice(0, lineStart) + currentCode.slice(lineStart + 4);
-          setUserCode(prev => ({ ...prev, [challenge.id]: newCode }));
+          setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
           setTimeout(() => {
             textarea.setSelectionRange(Math.max(lineStart, start - 4), Math.max(lineStart, end - 4));
           }, 0);
         }
       } else {
         const newCode = currentCode.substring(0, start) + '    ' + currentCode.substring(end);
-        setUserCode(prev => ({ ...prev, [challenge.id]: newCode }));
+        setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
         setTimeout(() => {
           textarea.setSelectionRange(start + 4, start + 4);
         }, 0);
@@ -165,7 +242,7 @@ export const CodingLabPage = ({ onNavigate }) => {
       e.preventDefault();
       const selected = currentCode.substring(start, end);
       const newCode = currentCode.substring(0, start) + e.key + selected + closing + currentCode.substring(end);
-      setUserCode(prev => ({ ...prev, [challenge.id]: newCode }));
+      setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
       setTimeout(() => {
         textarea.setSelectionRange(start + 1, end + 1);
       }, 0);
@@ -190,7 +267,7 @@ export const CodingLabPage = ({ onNavigate }) => {
           (prev === "'" && next === "'")) {
         e.preventDefault();
         const newCode = currentCode.slice(0, cursor - 1) + currentCode.slice(cursor + 1);
-        setUserCode(prev => ({ ...prev, [challenge.id]: newCode }));
+        setUserCode(prev => ({ ...prev, [codeKey]: newCode }));
         setTimeout(() => {
           textarea.setSelectionRange(cursor - 1, cursor - 1);
         }, 0);
@@ -200,10 +277,10 @@ export const CodingLabPage = ({ onNavigate }) => {
   };
 
   const handleResetCode = () => {
-    if (window.confirm('Reset this challenge to initial starter code? Any changes will be overwritten.')) {
+    if (window.confirm(`Reset this challenge to starter code for ${selectedLanguage === 'c' ? 'C' : 'C++'}? Any unsaved edits will be overwritten.`)) {
       setUserCode(prev => ({
         ...prev,
-        [challenge.id]: challenge.starterCode
+        [codeKey]: getStarterCode(challenge, selectedLanguage)
       }));
       setTestResults(null);
       setConsoleOutput('');
@@ -270,19 +347,23 @@ export const CodingLabPage = ({ onNavigate }) => {
   const handleLoadSolutionIntoEditor = () => {
     const cached = adminSolutionsCache[challenge.id];
     if (cached && cached.referenceSolution) {
+      const sol = typeof cached.referenceSolution === 'string'
+        ? cached.referenceSolution
+        : (cached.referenceSolution[selectedLanguage] || cached.referenceSolution['cpp'] || '');
       setUserCode(prev => ({
         ...prev,
-        [challenge.id]: cached.referenceSolution
+        [codeKey]: sol
       }));
       setShowSolution(false);
     }
   };
 
-  // Execute Code with real C++ compiler on backend
+  // Execute Code with real C or C++ compiler on backend
   const handleRunTests = async () => {
     setIsRunning(true);
     setTestResults(null);
-    setConsoleOutput('🚀 Compiling with clang++ -std=c++17 -O2...\n');
+    const compilerDesc = selectedLanguage === 'c' ? 'clang -std=c17 -O2' : 'clang++ -std=c++17 -O2';
+    setConsoleOutput(`🚀 Compiling with ${compilerDesc}...\n`);
 
     try {
       const res = await fetch(getApiUrl('/api/challenges/run'), {
@@ -290,7 +371,8 @@ export const CodingLabPage = ({ onNavigate }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challengeId: challenge.id,
-          code: currentCode
+          code: currentCode,
+          language: selectedLanguage
         })
       });
 
@@ -350,26 +432,26 @@ export const CodingLabPage = ({ onNavigate }) => {
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
       
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-xs font-bold">
               <Cpu className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-              <span>C++ Programming Lab • Units I, II & III</span>
+              <span>C & C++ Programming Lab • 36 Curriculum Challenges</span>
             </div>
             
             {/* Frontend Loading Concurrency Badge */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-xs font-bold" title="Problems are loaded 100% on the frontend client, enabling instant switching and zero backend strain for 100+ concurrent students">
               <Zap className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />
-              <span>Client-Side Engine • Ready for 100+ Concurrent Students</span>
+              <span>Dual Compiler (clang & clang++) • 100+ Concurrent Students</span>
             </div>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-            C++ Hands-On Coding Lab
+            Hands-On Coding Lab
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-            6 Production-Grade Problems (3 Easy, 2 Medium, 1 Hard) with live in-browser compilation & automated test assertions.
+            Choose your subject below. 36 Production-Grade Problems (6 per unit) with live in-browser C & C++ compilation and automated test assertions.
           </p>
         </div>
 
@@ -379,10 +461,47 @@ export const CodingLabPage = ({ onNavigate }) => {
             onClick={() => onNavigate('mcqs')}
             className="px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-xs transition-colors"
           >
-            <span>Practice 225 MCQs</span>
+            <span>Practice 270 MCQs</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
+      </div>
+
+      {/* SUBJECT SELECTOR TABS */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <button
+          onClick={() => handleSubjectChange('oops')}
+          className={`px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2.5 border transition-all ${
+            selectedSubject === 'oops'
+              ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-600/25 scale-[1.01]'
+              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-purple-400'
+          }`}
+        >
+          <Cpu className="w-4 h-4" />
+          <span>Subject 1: OOPs in CPP</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+            selectedSubject === 'oops' ? 'bg-purple-800/80 text-purple-100' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
+          }`}>
+            18 Labs
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleSubjectChange('dsa')}
+          className={`px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2.5 border transition-all ${
+            selectedSubject === 'dsa'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/25 scale-[1.01]'
+              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Subject 2: DSA</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+            selectedSubject === 'dsa' ? 'bg-blue-800/80 text-blue-100' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
+          }`}>
+            18 Labs
+          </span>
+        </button>
       </div>
 
       {/* Filter Strip */}
@@ -399,10 +518,21 @@ export const CodingLabPage = ({ onNavigate }) => {
             onChange={(e) => setSelectedUnit(e.target.value)}
             className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500"
           >
-            <option value="all">All Units (6 Problems)</option>
-            <option value="unit1">Unit 1: OOP & Classes (2 Problems)</option>
-            <option value="unit2">Unit 2: Pointers & Arrays (2 Problems)</option>
-            <option value="unit3">Unit 3: File Streams & RAII (2 Problems)</option>
+            {selectedSubject === 'oops' ? (
+              <>
+                <option value="all">All Units (18 Problems)</option>
+                <option value="unit1">Unit I: Basics & Overloading (6 Problems)</option>
+                <option value="unit2">Unit II: Classes, Pointers & Objects (6 Problems)</option>
+                <option value="unit3">Unit III: Streams & Polymorphism (6 Problems)</option>
+              </>
+            ) : (
+              <>
+                <option value="all">All Units (18 Problems)</option>
+                <option value="unit1">Unit I: Arrays, Searching & Sorting (6 Problems)</option>
+                <option value="unit2">Unit II: Linked Lists & Two-Way Lists (6 Problems)</option>
+                <option value="unit3">Unit III: Stacks, Notation & Queues (6 Problems)</option>
+              </>
+            )}
           </select>
 
           {/* Difficulty Filter */}
@@ -412,20 +542,20 @@ export const CodingLabPage = ({ onNavigate }) => {
             className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500"
           >
             <option value="all">All Difficulties</option>
-            <option value="easy">Easy (3 Problems)</option>
-            <option value="medium">Medium (2 Problems)</option>
-            <option value="hard">Hard (1 Problem)</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
           </select>
         </div>
 
         <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
-          Showing {filteredChallenges.length} of {CODING_CHALLENGES.length} challenges (Instant client-side loading)
+          Showing {filteredChallenges.length} of {CODING_CHALLENGES.filter(c => c.subjectId === selectedSubject).length} {selectedSubject === 'oops' ? 'OOPs' : 'DSA'} challenges
         </div>
       </div>
 
       {/* Challenge Selector Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-8">
-        {CODING_CHALLENGES.map((item, index) => {
+        {filteredChallenges.map((item, index) => {
           const isSelected = item.id === challenge.id;
           const diffColor = 
             item.difficulty === 'easy' ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' :
@@ -450,7 +580,7 @@ export const CodingLabPage = ({ onNavigate }) => {
                   </span>
                 </div>
                 <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-1">
-                  {item.unitId === 'unit1' ? 'Unit I' : item.unitId === 'unit2' ? 'Unit II' : 'Unit III'}
+                  {(item.unitId === 'unit1' || item.unitId === 'dsa_unit1') ? 'Unit I' : (item.unitId === 'unit2' || item.unitId === 'dsa_unit2') ? 'Unit II' : 'Unit III'}
                 </div>
                 <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-2 leading-tight">
                   {item.title}
@@ -542,17 +672,17 @@ export const CodingLabPage = ({ onNavigate }) => {
           {/* Target Test Output */}
           <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 shadow-sm">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-purple-600" />
+              <Terminal className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               Target Test Output
             </h4>
 
             <div className="space-y-3">
               {challenge.testCases.map((tc, idx) => (
-                <div key={tc.id} className="bg-slate-900 rounded-xl p-3.5 text-xs font-mono text-slate-200">
-                  <div className="text-[11px] text-purple-400 font-bold mb-1">
+                <div key={tc.id} className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3.5 text-xs font-mono text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800">
+                  <div className="text-[11px] text-purple-600 dark:text-purple-400 font-bold mb-1">
                     Test Case #{idx + 1}: {tc.name}
                   </div>
-                  <pre className="text-[11px] leading-relaxed overflow-x-auto text-emerald-400 bg-slate-950 p-2.5 rounded-lg border border-slate-800 whitespace-pre-wrap">
+                  <pre className="text-[11px] leading-relaxed overflow-x-auto text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 whitespace-pre-wrap">
                     {tc.expectedOutput}
                   </pre>
                 </div>
@@ -566,14 +696,14 @@ export const CodingLabPage = ({ onNavigate }) => {
         <div className="lg:col-span-7 space-y-4">
           
           <div className={`border rounded-3xl shadow-xl overflow-hidden flex flex-col transition-colors ${
-            editorTheme === 'dark'
+            isDark
               ? 'bg-slate-950 border-slate-800 shadow-purple-950/20'
               : 'bg-white border-slate-200 shadow-slate-200/50'
           }`}>
             
             {/* Editor Top Bar */}
             <div className={`px-5 py-3 border-b flex flex-wrap items-center justify-between gap-3 transition-colors ${
-              editorTheme === 'dark'
+              isDark
                 ? 'bg-slate-900/90 border-slate-800'
                 : 'bg-slate-100/90 border-slate-200'
             }`}>
@@ -582,41 +712,42 @@ export const CodingLabPage = ({ onNavigate }) => {
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 <span className={`text-xs font-mono font-bold ml-2 ${
-                  editorTheme === 'dark' ? 'text-slate-400' : 'text-slate-700'
+                  isDark ? 'text-slate-400' : 'text-slate-700'
                 }`}>
-                  solution.cpp (C++17)
+                  {selectedLanguage === 'c' ? 'solution.c (C17)' : 'solution.cpp (C++17)'}
                 </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                {/* Editor Light / Dark Mode Toggle */}
-                <button
-                  onClick={toggleEditorTheme}
-                  title={`Switch Code Editor to ${editorTheme === 'dark' ? 'Light' : 'Dark'} Mode`}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
-                    editorTheme === 'dark'
-                      ? 'text-amber-400 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                      : 'text-indigo-600 hover:text-indigo-700 bg-white hover:bg-slate-50 border-slate-300 shadow-xs'
-                  }`}
-                >
-                  {editorTheme === 'dark' ? (
-                    <>
-                      <Sun className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Light Editor</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Dark Editor</span>
-                    </>
-                  )}
-                </button>
+                {/* Language Switcher (C vs C++) */}
+                <div className="flex items-center p-0.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
+                  <button
+                    onClick={() => setSelectedLanguage('cpp')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedLanguage === 'cpp'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    C++17
+                  </button>
+                  <button
+                    onClick={() => setSelectedLanguage('c')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedLanguage === 'c'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    C17
+                  </button>
+                </div>
 
                 {/* Copy Button */}
                 <button
                   onClick={handleCopyCode}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-                    editorTheme === 'dark'
+                    isDark
                       ? 'text-slate-300 hover:bg-slate-800 border-slate-700'
                       : 'text-slate-700 hover:bg-white bg-slate-50 border-slate-300'
                   }`}
@@ -629,7 +760,7 @@ export const CodingLabPage = ({ onNavigate }) => {
                 <button
                   onClick={handleResetCode}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-                    editorTheme === 'dark'
+                    isDark
                       ? 'text-slate-300 hover:bg-slate-800 border-slate-700'
                       : 'text-slate-700 hover:bg-white bg-slate-50 border-slate-300'
                   }`}
@@ -658,7 +789,7 @@ export const CodingLabPage = ({ onNavigate }) => {
                   <button
                     onClick={() => setShowAdminModal(true)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-                      editorTheme === 'dark'
+                      isDark
                         ? 'text-slate-400 hover:text-amber-400 bg-slate-800/80 hover:bg-slate-800 border-slate-700'
                         : 'text-slate-500 hover:text-amber-600 bg-slate-100 hover:bg-slate-200 border-slate-300'
                     }`}
@@ -676,7 +807,7 @@ export const CodingLabPage = ({ onNavigate }) => {
                   className="px-4 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center gap-1.5 shadow-md shadow-purple-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                 >
                   <Play className={`w-3.5 h-3.5 fill-white ${isRunning ? 'animate-spin' : ''}`} />
-                  <span>{isRunning ? 'Compiling & Running...' : 'Run & Test'}</span>
+                  <span>{isRunning ? 'Compiling & Running...' : `Run & Test (${selectedLanguage === 'c' ? 'C' : 'C++'})`}</span>
                 </button>
               </div>
             </div>
@@ -699,7 +830,7 @@ export const CodingLabPage = ({ onNavigate }) => {
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                     <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-200">
-                      Instructor Verified Reference Solution (Admin Only)
+                      Instructor Verified Reference Solution ({selectedLanguage === 'c' ? 'C17' : 'C++17'})
                     </h4>
                   </div>
                   <button
@@ -707,12 +838,14 @@ export const CodingLabPage = ({ onNavigate }) => {
                     className="text-xs font-bold px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
-                    <span>Load Solution into Editor</span>
+                    <span>Load {selectedLanguage === 'c' ? 'C' : 'C++'} Solution into Editor</span>
                   </button>
                 </div>
 
-                <pre className="text-xs font-mono p-4 rounded-xl bg-slate-900 text-slate-100 overflow-x-auto max-h-72 border border-slate-700 leading-relaxed whitespace-pre-wrap">
-                  {currentAdminSol.referenceSolution}
+                <pre className="text-xs font-mono p-4 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-x-auto max-h-72 border border-amber-300 dark:border-slate-700 leading-relaxed whitespace-pre-wrap shadow-inner">
+                  {typeof currentAdminSol.referenceSolution === 'string'
+                    ? currentAdminSol.referenceSolution
+                    : (currentAdminSol.referenceSolution[selectedLanguage] || currentAdminSol.referenceSolution['cpp'] || '')}
                 </pre>
 
                 {currentAdminSol.solutionExplanation && (
@@ -726,14 +859,14 @@ export const CodingLabPage = ({ onNavigate }) => {
 
             {/* Code Editor with Synced Line Numbers */}
             <div className={`relative flex font-mono text-xs sm:text-sm h-[480px] overflow-hidden ${
-              editorTheme === 'dark' ? 'bg-slate-950' : 'bg-white'
+              isDark ? 'bg-slate-950' : 'bg-white'
             }`}>
               
               {/* Line Numbers Gutter */}
               <div
                 ref={lineGutterRef}
                 className={`select-none text-right pr-3 pl-3 pt-4 pb-4 font-mono text-xs leading-relaxed border-r overflow-hidden transition-colors ${
-                  editorTheme === 'dark'
+                  isDark
                     ? 'bg-slate-900/40 text-slate-600 border-slate-800/80'
                     : 'bg-slate-100/60 text-slate-400 border-slate-200'
                 }`}
@@ -753,47 +886,47 @@ export const CodingLabPage = ({ onNavigate }) => {
                 onScroll={handleEditorScroll}
                 spellCheck="false"
                 className={`flex-1 p-4 pt-4 pb-4 font-mono text-xs sm:text-sm focus:outline-none resize-none leading-relaxed border-0 font-medium overflow-y-auto transition-colors ${
-                  editorTheme === 'dark'
+                  isDark
                     ? 'bg-slate-950 text-emerald-400 caret-emerald-400 selection:bg-purple-900 selection:text-white'
                     : 'bg-white text-slate-900 caret-purple-600 selection:bg-purple-200 selection:text-purple-900'
                 }`}
                 style={{ lineHeight: '21px' }}
-                placeholder="// Write your C++ solution here..."
+                placeholder={selectedLanguage === 'c' ? '// Write your C solution here...' : '// Write your C++ solution here...'}
               />
             </div>
 
             {/* Editor Footer Status Bar */}
             <div className={`px-5 py-2 border-t flex flex-wrap items-center justify-between text-[11px] font-mono transition-colors ${
-              editorTheme === 'dark'
+              isDark
                 ? 'bg-slate-900/80 border-slate-800 text-slate-400'
                 : 'bg-slate-100 border-slate-200 text-slate-600'
             }`}>
               <div className="flex items-center gap-4">
-                <span>Compiler: <strong className="text-purple-500 font-bold">C++17 (clang++)</strong></span>
+                <span>Compiler: <strong className="text-purple-500 font-bold">{selectedLanguage === 'c' ? 'C17 (clang)' : 'C++17 (clang++)'}</strong></span>
                 <span>Lines: <strong>{lineCount}</strong></span>
                 <span>Length: <strong>{currentCode.length} chars</strong></span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <span className={`w-2 h-2 rounded-full ${editorTheme === 'dark' ? 'bg-emerald-400' : 'bg-indigo-500'}`} />
-                  <span>Theme: <strong>{editorTheme === 'dark' ? 'Dark (Matrix)' : 'Light (Paper)'}</strong></span>
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Saved in LocalStorage</span>
                 </span>
-                <span className="hidden sm:inline text-slate-500">•</span>
-                <span className="hidden sm:inline text-emerald-500 font-semibold">100% Frontend Loaded</span>
+                <span className="hidden sm:inline text-slate-400">•</span>
+                <span className="hidden sm:inline text-slate-500 dark:text-slate-400 font-medium">100% Client-Side Engine</span>
               </div>
             </div>
 
-            {/* Execution & Compiler Results Drawer (MATCHES EDITOR LIGHT & DARK THEME) */}
+            {/* Execution & Compiler Results Drawer (MATCHES APPLICATION LIGHT & DARK THEME) */}
             <div className={`border-t p-5 transition-colors ${
-              editorTheme === 'dark'
+              isDark
                 ? 'border-slate-800 bg-slate-900 text-slate-200'
                 : 'border-slate-200 bg-slate-50 text-slate-900'
             }`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Terminal className={`w-4 h-4 ${editorTheme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
+                  <Terminal className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
                   <span className={`text-xs font-bold uppercase tracking-wider ${
-                    editorTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
+                    isDark ? 'text-slate-300' : 'text-slate-700'
                   }`}>
                     Live Compiler & Execution Console
                   </span>
@@ -829,18 +962,18 @@ export const CodingLabPage = ({ onNavigate }) => {
 
               {/* Console Log */}
               <pre className={`rounded-xl p-3.5 font-mono text-xs overflow-x-auto border min-h-[90px] leading-relaxed whitespace-pre-wrap transition-colors ${
-                editorTheme === 'dark'
+                isDark
                   ? 'bg-slate-950 text-slate-300 border-slate-800'
                   : 'bg-white text-slate-800 border-slate-200 shadow-sm'
               }`}>
-                {consoleOutput || 'Click "Run & Test" to compile your C++ code with clang++ -std=c++17 and execute against test cases.'}
+                {consoleOutput || `Click "Run & Test" to compile your ${selectedLanguage === 'c' ? 'C code with clang -std=c17' : 'C++ code with clang++ -std=c++17'} and execute against test cases.`}
               </pre>
 
               {/* Detailed Test Case Diffs */}
               {testResults && testResults.cases && testResults.cases.length > 0 && (
                 <div className="mt-4 space-y-3">
                   <div className={`flex items-center gap-2 border-b pb-2 ${
-                    editorTheme === 'dark' ? 'border-slate-800' : 'border-slate-200'
+                    isDark ? 'border-slate-800' : 'border-slate-200'
                   }`}>
                     {testResults.cases.map((tc, idx) => (
                       <button
@@ -849,7 +982,7 @@ export const CodingLabPage = ({ onNavigate }) => {
                         className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
                           activeTestCaseTab === idx
                             ? 'bg-purple-600 text-white shadow-xs'
-                            : editorTheme === 'dark'
+                            : isDark
                             ? 'text-slate-400 hover:text-white bg-slate-800'
                             : 'text-slate-600 hover:text-slate-900 bg-slate-200/80'
                         }`}
@@ -866,18 +999,18 @@ export const CodingLabPage = ({ onNavigate }) => {
 
                   {testResults.cases[activeTestCaseTab] && (
                     <div className={`rounded-xl p-3.5 border text-xs font-mono space-y-2 transition-colors ${
-                      editorTheme === 'dark'
+                      isDark
                         ? 'bg-slate-950/80 border-slate-800 text-slate-300'
                         : 'bg-white border-slate-200 text-slate-800 shadow-sm'
                     }`}>
-                      <div className={editorTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>
-                        <span className={`font-bold ${editorTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>Name: </span>
+                      <div className={isDark ? 'text-slate-400' : 'text-slate-600'}>
+                        <span className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Name: </span>
                         {testResults.cases[activeTestCaseTab].name}
                       </div>
                       <div>
-                        <span className={`font-bold ${editorTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>Expected Output:</span>
+                        <span className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Expected Output:</span>
                         <pre className={`mt-1 p-2 rounded overflow-x-auto border whitespace-pre-wrap ${
-                          editorTheme === 'dark'
+                          isDark
                             ? 'bg-slate-900 text-emerald-400 border-slate-800'
                             : 'bg-emerald-50/60 text-emerald-700 border-emerald-200'
                         }`}>
@@ -885,11 +1018,11 @@ export const CodingLabPage = ({ onNavigate }) => {
                         </pre>
                       </div>
                       <div>
-                        <span className={`font-bold ${editorTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>Actual Output:</span>
+                        <span className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Actual Output:</span>
                         <pre className={`mt-1 p-2 rounded overflow-x-auto border whitespace-pre-wrap ${
                           testResults.cases[activeTestCaseTab].passed
-                            ? editorTheme === 'dark' ? 'bg-slate-900 text-emerald-400 border-slate-800' : 'bg-emerald-50/60 text-emerald-700 border-emerald-200'
-                            : editorTheme === 'dark' ? 'bg-slate-900 text-rose-400 font-bold border-slate-800' : 'bg-rose-50 text-rose-600 font-bold border-rose-200'
+                            ? isDark ? 'bg-slate-900 text-emerald-400 border-slate-800' : 'bg-emerald-50/60 text-emerald-700 border-emerald-200'
+                            : isDark ? 'bg-slate-900 text-rose-400 font-bold border-slate-800' : 'bg-rose-50 text-rose-600 font-bold border-rose-200'
                         }`}>
                           {testResults.cases[activeTestCaseTab].actual}
                         </pre>

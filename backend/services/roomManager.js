@@ -20,8 +20,11 @@ export const generateRoomCode = () => {
 };
 
 // Create a new room
-export const createRoom = async (quizId, adminSocketId = null) => {
-  const quiz = await getQuizById(quizId);
+export const createRoom = async (quizId, adminSocketId = null, fallbackQuiz = null) => {
+  let quiz = await getQuizById(quizId);
+  if (!quiz && fallbackQuiz) {
+    quiz = fallbackQuiz;
+  }
   if (!quiz) {
     throw new Error('Quiz not found');
   }

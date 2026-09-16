@@ -31,6 +31,14 @@ const QuestionSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  subjectId: {
+    type: String,
+    default: 'oops',
+  },
+  language: {
+    type: String,
+    default: 'both',
+  },
 });
 
 const QuizSchema = new mongoose.Schema(
@@ -48,7 +56,23 @@ const QuizSchema = new mongoose.Schema(
       type: String,
       default: 'admin-default',
     },
+    subjectId: {
+      type: String,
+      default: 'oops',
+    },
     unitId: {
+      type: String,
+      default: '',
+    },
+    unitNumber: {
+      type: Number,
+      default: 1,
+    },
+    unitLabel: {
+      type: String,
+      default: '',
+    },
+    unitTopic: {
       type: String,
       default: '',
     },
@@ -56,9 +80,13 @@ const QuizSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    sectionTitle: {
+      type: String,
+      default: '',
+    },
     difficulty: {
       type: String,
-      enum: ['easy', 'medium', 'hard'],
+      enum: ['easy', 'medium', 'hard', 'mixed', 'all'],
       default: 'medium',
     },
     questions: [QuestionSchema],

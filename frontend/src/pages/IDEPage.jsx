@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Code2,
   Play,
   Terminal,
   Plus,
@@ -11,8 +10,6 @@ import {
   Copy,
   Check,
   RotateCcw,
-  Sun,
-  Moon,
   Zap,
   FolderOpen,
   ArrowRight,
@@ -20,14 +17,13 @@ import {
   CheckCircle2,
   XCircle,
   FileCode,
-  Layers,
   Sparkles,
-  HelpCircle,
-  Clock,
   Eye,
-  CheckCheck
+  Save,
+  X
 } from 'lucide-react';
 import { getApiUrl } from '../services/api.js';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 const C_BOILERPLATE = `#include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +70,7 @@ int main() {
         }
         fclose(in);
     } else {
-        printf("\\n(Tip: Click '+ New File' in the Virtual Files panel, create 'input.txt', and run again)\\n");
+        printf("\\n(Tip: Click '+ New File' in Workspace Files, create 'input.txt', and run again)\\n");
     }
 
     return 0;
@@ -84,17 +80,19 @@ const CPP_BOILERPLATE = `#include <iostream>
 #include <string>
 #include <vector>
 
+using namespace std;
+
 int main() {
-    std::cout << "⚡ Welcome to the LiveQuiz C++ IDE!\\n";
-    std::cout << "Compiled with Apple clang++ (C++17).\\n\\n";
+    cout << "⚡ Welcome to the LiveQuiz C++ IDE!\\n";
+    cout << "Compiled with Apple clang++ (C++17).\\n\\n";
 
     // Optional: read from custom stdin
-    std::string name;
-    std::cout << "Enter your name: ";
-    if (std::cin >> name) {
-        std::cout << "Hello, " << name << "! Welcome to the C++ playground.\\n";
+    string name;
+    cout << "Enter your name: ";
+    if (cin >> name) {
+        cout << "Hello, " << name << "! Welcome to the C++ playground.\\n";
     } else {
-        std::cout << "No input provided. (Tip: Type in the 'Standard Input (Stdin)' tab below)\\n";
+        cout << "No input provided. (Tip: Type in the 'Standard Input (Stdin)' tab below)\\n";
     }
 
     return 0;
@@ -105,34 +103,36 @@ const CPP_FILE_STREAM_DEMO = `#include <iostream>
 #include <string>
 #include <vector>
 
-int main() {
-    std::cout << "--- C++ File Stream Demonstration ---\\n";
+using namespace std;
 
-    // 1. Write to an output file using std::ofstream
-    std::ofstream outFile("results.txt");
+int main() {
+    cout << "--- C++ File Stream Demonstration ---\\n";
+
+    // 1. Write to an output file using ofstream
+    ofstream outFile("results.txt");
     if (!outFile) {
-        std::cerr << "Error creating results.txt\\n";
+        cerr << "Error creating results.txt\\n";
         return 1;
     }
     outFile << "=== C++ File Stream Output ===\\n";
-    outFile << "Timestamp: 2026-09-13\\n";
+    outFile << "Timestamp: 2026-09-16\\n";
     outFile << "Status: Verified\\n";
     outFile << "Scores: 95, 88, 92, 100\\n";
     outFile.close();
 
-    std::cout << "✅ Successfully created 'results.txt'! Check the 'Output Files' tab below.\\n";
+    cout << "✅ Successfully created 'results.txt'! Check the 'Output Files' tab below.\\n";
 
-    // 2. Read from an input file (e.g. create 'data.txt' via '+ New File')
-    std::ifstream inFile("data.txt");
+    // 2. Read from an auxiliary input file (e.g. 'input.txt')
+    ifstream inFile("input.txt");
     if (inFile) {
-        std::cout << "\\n--- Reading data.txt ---\\n";
-        std::string line;
-        while (std::getline(inFile, line)) {
-            std::cout << line << "\\n";
+        cout << "\\n--- Reading input.txt ---\\n";
+        string line;
+        while (getline(inFile, line)) {
+            cout << line << "\\n";
         }
         inFile.close();
     } else {
-        std::cout << "\\n(Tip: Click '+ New File' or 'Upload File', add 'data.txt', and rerun!)\\n";
+        cout << "\\n(Tip: Click '+ New File' or 'Upload File', add 'input.txt', and rerun!)\\n";
     }
 
     return 0;
@@ -171,14 +171,14 @@ const CPP_AUTOCOMPLETE = [
   { label: '#include <fstream>', insert: '#include <fstream>\n', type: 'directive' },
   { label: '#include <iomanip>', insert: '#include <iomanip>\n', type: 'directive' },
   { label: '#include <algorithm>', insert: '#include <algorithm>\n', type: 'directive' },
-  { label: 'std::cout', insert: 'std::cout <<  << "\\n";', type: 'function' },
-  { label: 'std::cin', insert: 'std::cin >> ;', type: 'function' },
-  { label: 'std::endl', insert: 'std::endl;', type: 'keyword' },
-  { label: 'std::vector', insert: 'std::vector<int> vec;', type: 'type' },
-  { label: 'std::string', insert: 'std::string str;', type: 'type' },
-  { label: 'std::ifstream', insert: 'std::ifstream in("filename.txt");\nif (!in) {\n    std::cerr << "Cannot open file\\n";\n}\n', type: 'snippet' },
-  { label: 'std::ofstream', insert: 'std::ofstream out("output.txt");\nif (!out) {\n    std::cerr << "Cannot open file\\n";\n}\nout << "data" << "\\n";\nout.close();\n', type: 'snippet' },
-  { label: 'std::fstream', insert: 'std::fstream file("db.dat", std::ios::in | std::ios::out | std::ios::binary);', type: 'snippet' },
+  { label: 'cout', insert: 'cout <<  << "\\n";', type: 'function' },
+  { label: 'cin', insert: 'cin >> ;', type: 'function' },
+  { label: 'endl', insert: 'endl;', type: 'keyword' },
+  { label: 'vector', insert: 'vector<int> vec;', type: 'type' },
+  { label: 'string', insert: 'string str;', type: 'type' },
+  { label: 'ifstream', insert: 'ifstream in("filename.txt");\nif (!in) {\n    cerr << "Cannot open file\\n";\n}\n', type: 'snippet' },
+  { label: 'ofstream', insert: 'ofstream out("output.txt");\nif (!out) {\n    cerr << "Cannot open file\\n";\n}\nout << "data" << "\\n";\nout.close();\n', type: 'snippet' },
+  { label: 'fstream', insert: 'fstream file("db.dat", ios::in | ios::out | ios::binary);', type: 'snippet' },
   { label: 'class', insert: 'class MyClass {\nprivate:\n    int id;\npublic:\n    MyClass(int id) : id(id) {}\n    ~MyClass() {}\n};', type: 'snippet' },
   { label: 'struct', insert: 'struct Record {\n    int id;\n    char name[32];\n    double score;\n};', type: 'snippet' },
   { label: 'for (range)', insert: 'for (const auto& item : items) {\n    \n}', type: 'snippet' },
@@ -190,57 +190,86 @@ const CPP_AUTOCOMPLETE = [
   { label: 'using namespace std;', insert: 'using namespace std;\n', type: 'directive' }
 ];
 
+const DEFAULT_FILES = [
+  {
+    id: 'f-main-cpp',
+    name: 'main.cpp',
+    language: 'cpp',
+    content: CPP_BOILERPLATE,
+    isBinary: false,
+    sizeBytes: 360
+  },
+  {
+    id: 'f-main-c',
+    name: 'main.c',
+    language: 'c',
+    content: C_BOILERPLATE,
+    isBinary: false,
+    sizeBytes: 375
+  },
+  {
+    id: 'f-input-txt',
+    name: 'input.txt',
+    language: 'text',
+    content: 'Sample data line 1\nSample data line 2\n42 100 256',
+    isBinary: false,
+    sizeBytes: 45
+  }
+];
+
 export const IDEPage = ({ onNavigate }) => {
-  const [language, setLanguage] = useState('cpp'); // 'c' | 'cpp'
-  const [code, setCode] = useState(CPP_BOILERPLATE);
+  const { theme, isDark } = useTheme();
+
+  // Multi-file Workspace loaded from LocalStorage or default
+  const [workspaceFiles, setWorkspaceFiles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('livequiz_ide_files');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load saved IDE files:', e);
+    }
+    return DEFAULT_FILES;
+  });
+
+  const [activeFileId, setActiveFileId] = useState(() => {
+    try {
+      const savedId = localStorage.getItem('livequiz_ide_active_file_id');
+      if (savedId) return savedId;
+    } catch (e) {}
+    return 'f-main-cpp';
+  });
+
+  // Active file determination
+  const activeFile = workspaceFiles.find(f => f.id === activeFileId) || workspaceFiles[0] || DEFAULT_FILES[0];
+  const activeCode = activeFile.content || '';
+  const activeLanguage = activeFile.language || (activeFile.name.endsWith('.c') ? 'c' : activeFile.name.endsWith('.cpp') ? 'cpp' : 'text');
+
   const [stdinInput, setStdinInput] = useState('');
   const [activeConsoleTab, setActiveConsoleTab] = useState('terminal'); // 'terminal' | 'stdin' | 'outputFiles'
   const [copied, setCopied] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // 'saved' | null
 
   // Autocompletion State
   const [suggestions, setSuggestions] = useState([]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
   const [activePrefix, setActivePrefix] = useState('');
 
-  // Virtual Filesystem: Array of { id, name, content, isBinary, base64, sizeBytes }
-  const [virtualFiles, setVirtualFiles] = useState([
-    {
-      id: 'vf-1',
-      name: 'input.txt',
-      content: 'Sample data line 1\nSample data line 2\n42 100 256',
-      isBinary: false,
-      sizeBytes: 45
-    }
-  ]);
-
-  // Selected file modal
-  const [activeFileId, setActiveFileId] = useState(null);
+  // Modals
   const [showNewFileModal, setShowNewFileModal] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [newFileContent, setNewFileContent] = useState('');
+  const [inspectFileId, setInspectFileId] = useState(null);
 
   // Execution State
   const [isRunning, setIsRunning] = useState(false);
   const [executionResult, setExecutionResult] = useState(null);
   const [consoleOutput, setConsoleOutput] = useState('');
   const [outputFiles, setOutputFiles] = useState([]);
-
-  // Editor Theme (Light vs Dark) - Drives BOTH Editor AND Output
-  const [editorTheme, setEditorTheme] = useState(() => {
-    try {
-      return localStorage.getItem('ide_editor_theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
-  const toggleEditorTheme = () => {
-    const next = editorTheme === 'dark' ? 'light' : 'dark';
-    setEditorTheme(next);
-    try {
-      localStorage.setItem('ide_editor_theme', next);
-    } catch {}
-  };
 
   // Refs
   const textareaRef = useRef(null);
@@ -253,8 +282,56 @@ export const IDEPage = ({ onNavigate }) => {
     }
   };
 
-  const lineCount = (code.match(/\n/g) || []).length + 1;
+  const lineCount = (activeCode.match(/\n/g) || []).length + 1;
   const linesArray = Array.from({ length: Math.max(lineCount, 26) }, (_, i) => i + 1);
+
+  // Update content of active file
+  const updateActiveFileContent = (newContent) => {
+    setWorkspaceFiles(prev => prev.map(f => {
+      if (f.id === activeFile.id) {
+        return {
+          ...f,
+          content: newContent,
+          sizeBytes: new Blob([newContent]).size
+        };
+      }
+      return f;
+    }));
+  };
+
+  // Explicit Save to LocalStorage with visual feedback
+  const handleSaveFile = () => {
+    try {
+      localStorage.setItem('livequiz_ide_files', JSON.stringify(workspaceFiles));
+      localStorage.setItem('livequiz_ide_active_file_id', activeFile.id);
+      setSaveStatus('saved');
+      setTimeout(() => {
+        setSaveStatus(null);
+      }, 2500);
+    } catch (err) {
+      console.error('Failed to save to localStorage:', err);
+    }
+  };
+
+  // Auto-save to LocalStorage in background
+  useEffect(() => {
+    try {
+      localStorage.setItem('livequiz_ide_files', JSON.stringify(workspaceFiles));
+      localStorage.setItem('livequiz_ide_active_file_id', activeFile.id);
+    } catch (e) {}
+  }, [workspaceFiles, activeFile.id]);
+
+  // Keyboard shortcut Ctrl+S / Cmd+S to Save
+  useEffect(() => {
+    const handleGlobalSaveShortcut = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveFile();
+      }
+    };
+    window.addEventListener('keydown', handleGlobalSaveShortcut);
+    return () => window.removeEventListener('keydown', handleGlobalSaveShortcut);
+  }, [workspaceFiles, activeFile.id]);
 
   // Apply Autocompletion Suggestion
   const applySuggestion = (suggestion) => {
@@ -262,19 +339,17 @@ export const IDEPage = ({ onNavigate }) => {
     if (!textarea) return;
 
     const cursor = textarea.selectionStart;
-    const textBefore = code.slice(0, cursor);
-    const textAfter = code.slice(cursor);
+    const textBefore = activeCode.slice(0, cursor);
+    const textAfter = activeCode.slice(cursor);
 
-    // Replace current active prefix
     const prefixLen = activePrefix.length;
     const newTextBefore = textBefore.slice(0, textBefore.length - prefixLen);
     const insertVal = suggestion.insert;
 
     const newCode = newTextBefore + insertVal + textAfter;
-    setCode(newCode);
+    updateActiveFileContent(newCode);
     setSuggestions([]);
 
-    // Reposition cursor
     setTimeout(() => {
       textarea.focus();
       const newCursor = newTextBefore.length + insertVal.length;
@@ -282,14 +357,14 @@ export const IDEPage = ({ onNavigate }) => {
     }, 10);
   };
 
-  // Keyboard Handler with Tab Indent, Auto-closing Brackets, and Autocomplete Navigation
+  // Keyboard Handler with Indentation, Enter, Bracket Pairs, and Autocomplete
   const handleEditorKeyDown = (e) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
     const cursor = textarea.selectionStart;
 
-    // 1. If autocomplete popup is active, navigate or accept
+    // 1. Autocomplete navigation / acceptance
     if (suggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -321,18 +396,18 @@ export const IDEPage = ({ onNavigate }) => {
 
       if (e.shiftKey) {
         // Shift+Tab: Unindent 4 spaces
-        const lineStart = code.lastIndexOf('\n', start - 1) + 1;
-        if (code.slice(lineStart, lineStart + 4) === '    ') {
-          const newCode = code.slice(0, lineStart) + code.slice(lineStart + 4);
-          setCode(newCode);
+        const lineStart = activeCode.lastIndexOf('\n', start - 1) + 1;
+        if (activeCode.slice(lineStart, lineStart + 4) === '    ') {
+          const newCode = activeCode.slice(0, lineStart) + activeCode.slice(lineStart + 4);
+          updateActiveFileContent(newCode);
           setTimeout(() => {
             textarea.setSelectionRange(Math.max(lineStart, start - 4), Math.max(lineStart, end - 4));
           }, 0);
         }
       } else {
         // Tab: Insert 4 spaces
-        const newCode = code.substring(0, start) + '    ' + code.substring(end);
-        setCode(newCode);
+        const newCode = activeCode.substring(0, start) + '    ' + activeCode.substring(end);
+        updateActiveFileContent(newCode);
         setTimeout(() => {
           textarea.setSelectionRange(start + 4, start + 4);
         }, 0);
@@ -340,7 +415,40 @@ export const IDEPage = ({ onNavigate }) => {
       return;
     }
 
-    // 3. Auto-closing pairs: (), [], {}, "", ''
+    // 3. Smart Enter key indentation
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const lineStart = activeCode.lastIndexOf('\n', cursor - 1) + 1;
+      const currentLine = activeCode.slice(lineStart, cursor);
+      const indentMatch = currentLine.match(/^\s*/);
+      const baseIndent = indentMatch ? indentMatch[0] : '';
+      
+      const charBefore = activeCode[cursor - 1];
+      const charAfter = activeCode[cursor];
+
+      // Case: between { and } -> expand block with inner indentation
+      if (charBefore === '{' && charAfter === '}') {
+        const indentLevel = baseIndent + '    ';
+        const newCode = activeCode.slice(0, cursor) + '\n' + indentLevel + '\n' + baseIndent + activeCode.slice(cursor);
+        updateActiveFileContent(newCode);
+        setTimeout(() => {
+          textarea.setSelectionRange(cursor + 1 + indentLevel.length, cursor + 1 + indentLevel.length);
+        }, 0);
+        return;
+      }
+
+      // Case: line ends with { -> add 4 spaces indent
+      const extraIndent = charBefore === '{' ? '    ' : '';
+      const insertText = '\n' + baseIndent + extraIndent;
+      const newCode = activeCode.slice(0, cursor) + insertText + activeCode.slice(cursor);
+      updateActiveFileContent(newCode);
+      setTimeout(() => {
+        textarea.setSelectionRange(cursor + insertText.length, cursor + insertText.length);
+      }, 0);
+      return;
+    }
+
+    // 4. Auto-closing pairs: (), [], {}, "", ''
     const pairs = {
       '(': ')',
       '[': ']',
@@ -354,17 +462,16 @@ export const IDEPage = ({ onNavigate }) => {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
-      // Special case: if user types closing bracket when next char is already closing, just advance
-      if (code[start] === e.key && (e.key === '"' || e.key === "'")) {
+      if (activeCode[start] === e.key && (e.key === '"' || e.key === "'")) {
         e.preventDefault();
         textarea.setSelectionRange(start + 1, start + 1);
         return;
       }
 
       e.preventDefault();
-      const selected = code.substring(start, end);
-      const newCode = code.substring(0, start) + e.key + selected + closing + code.substring(end);
-      setCode(newCode);
+      const selected = activeCode.substring(start, end);
+      const newCode = activeCode.substring(0, start) + e.key + selected + closing + activeCode.substring(end);
+      updateActiveFileContent(newCode);
 
       setTimeout(() => {
         textarea.setSelectionRange(start + 1, end + 1);
@@ -373,24 +480,24 @@ export const IDEPage = ({ onNavigate }) => {
     }
 
     // Advance over closing bracket if typed
-    if ((e.key === ')' || e.key === ']' || e.key === '}') && code[cursor] === e.key) {
+    if ((e.key === ')' || e.key === ']' || e.key === '}') && activeCode[cursor] === e.key) {
       e.preventDefault();
       textarea.setSelectionRange(cursor + 1, cursor + 1);
       return;
     }
 
-    // 4. Backspace between brackets deletes both
+    // 5. Backspace between brackets deletes both
     if (e.key === 'Backspace' && cursor > 0) {
-      const prev = code[cursor - 1];
-      const next = code[cursor];
+      const prev = activeCode[cursor - 1];
+      const next = activeCode[cursor];
       if ((prev === '(' && next === ')') ||
           (prev === '[' && next === ']') ||
           (prev === '{' && next === '}') ||
           (prev === '"' && next === '"') ||
           (prev === "'" && next === "'")) {
         e.preventDefault();
-        const newCode = code.slice(0, cursor - 1) + code.slice(cursor + 1);
-        setCode(newCode);
+        const newCode = activeCode.slice(0, cursor - 1) + activeCode.slice(cursor + 1);
+        updateActiveFileContent(newCode);
         setTimeout(() => {
           textarea.setSelectionRange(cursor - 1, cursor - 1);
         }, 0);
@@ -402,19 +509,18 @@ export const IDEPage = ({ onNavigate }) => {
   // Trigger Autocompletion when typing words
   const handleCodeChange = (e) => {
     const val = e.target.value;
-    setCode(val);
+    updateActiveFileContent(val);
 
     const cursor = e.target.selectionStart;
     const textBefore = val.slice(0, cursor);
 
-    // Look for current word prefix
     const match = textBefore.match(/([a-zA-Z_#:][a-zA-Z0-9_#:]*)$/);
     if (match) {
       const prefix = match[1];
       setActivePrefix(prefix);
 
       if (prefix.length >= 2) {
-        const pool = language === 'c' ? C_AUTOCOMPLETE : CPP_AUTOCOMPLETE;
+        const pool = activeLanguage === 'c' ? C_AUTOCOMPLETE : CPP_AUTOCOMPLETE;
         const filtered = pool.filter(item =>
           item.label.toLowerCase().startsWith(prefix.toLowerCase()) ||
           item.insert.toLowerCase().startsWith(prefix.toLowerCase())
@@ -432,87 +538,128 @@ export const IDEPage = ({ onNavigate }) => {
     setActivePrefix('');
   };
 
-  // Switch Language
+  // Switch Language from top bar
   const handleLanguageChange = (newLang) => {
-    if (newLang === language) return;
-    const isSwitchingToC = newLang === 'c';
-    const msg = `Switch to ${isSwitchingToC ? 'C (C17)' : 'C++ (C++17)'}? Your current code in the editor will be replaced with a clean starter template.`;
-    if (code.trim() && !window.confirm(msg)) {
+    if (newLang === activeLanguage) return;
+
+    // Switch to main.c or main.cpp if available
+    const existing = workspaceFiles.find(f => f.name.toLowerCase() === (newLang === 'c' ? 'main.c' : 'main.cpp'));
+    if (existing) {
+      setActiveFileId(existing.id);
       return;
     }
-    setLanguage(newLang);
-    setCode(isSwitchingToC ? C_BOILERPLATE : CPP_BOILERPLATE);
-    setExecutionResult(null);
-    setConsoleOutput('');
-    setOutputFiles([]);
-    setSuggestions([]);
+
+    // Otherwise switch active file's language and prompt template
+    const isSwitchingToC = newLang === 'c';
+    if (window.confirm(`Switch active file to ${isSwitchingToC ? 'C (C17)' : 'C++ (C++17)'}?`)) {
+      setWorkspaceFiles(prev => prev.map(f => {
+        if (f.id === activeFile.id) {
+          const newName = isSwitchingToC ? f.name.replace(/\.cpp$/, '.c') : f.name.replace(/\.c$/, '.cpp');
+          return {
+            ...f,
+            name: newName,
+            language: newLang,
+            content: isSwitchingToC ? C_BOILERPLATE : CPP_BOILERPLATE
+          };
+        }
+        return f;
+      }));
+    }
   };
 
   // Load Templates
   const handleLoadTemplate = (type) => {
-    if (language === 'c') {
-      setCode(type === 'stream' ? C_FILE_STREAM_DEMO : C_BOILERPLATE);
-    } else {
-      setCode(type === 'stream' ? CPP_FILE_STREAM_DEMO : CPP_BOILERPLATE);
-    }
+    const isC = activeLanguage === 'c';
+    const newContent = isC
+      ? (type === 'stream' ? C_FILE_STREAM_DEMO : C_BOILERPLATE)
+      : (type === 'stream' ? CPP_FILE_STREAM_DEMO : CPP_BOILERPLATE);
+    updateActiveFileContent(newContent);
   };
 
   // Copy Code
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(activeCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   // Reset Code
   const handleResetCode = () => {
-    if (window.confirm('Reset code to default template?')) {
-      setCode(language === 'c' ? C_BOILERPLATE : CPP_BOILERPLATE);
+    if (window.confirm(`Reset "${activeFile.name}" to default template?`)) {
+      const isC = activeLanguage === 'c';
+      updateActiveFileContent(isC ? C_BOILERPLATE : CPP_BOILERPLATE);
       setExecutionResult(null);
       setConsoleOutput('');
     }
   };
 
-  // Add New File to Virtual Filesystem
+  // Create New File in Workspace
   const handleCreateFile = (e) => {
     e.preventDefault();
     if (!newFileName.trim()) return;
 
-    let cleanName = newFileName.trim();
-    if (virtualFiles.some(f => f.name.toLowerCase() === cleanName.toLowerCase())) {
+    const cleanName = newFileName.trim();
+    if (workspaceFiles.some(f => f.name.toLowerCase() === cleanName.toLowerCase())) {
       alert(`A file named "${cleanName}" already exists.`);
       return;
     }
 
+    let detectedLang = 'text';
+    let defaultContent = newFileContent;
+
+    if (cleanName.endsWith('.c')) {
+      detectedLang = 'c';
+      if (!defaultContent) defaultContent = C_BOILERPLATE;
+    } else if (cleanName.endsWith('.cpp') || cleanName.endsWith('.cc') || cleanName.endsWith('.cxx')) {
+      detectedLang = 'cpp';
+      if (!defaultContent) defaultContent = CPP_BOILERPLATE;
+    } else if (cleanName.endsWith('.h') || cleanName.endsWith('.hpp')) {
+      detectedLang = 'cpp';
+      if (!defaultContent) {
+        const guard = cleanName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+        defaultContent = `#ifndef ${guard}\n#define ${guard}\n\n#include <iostream>\nusing namespace std;\n\n// Header declarations\n\n#endif // ${guard}\n`;
+      }
+    }
+
     const newFile = {
-      id: `vf-${Date.now()}`,
+      id: `file-${Date.now()}`,
       name: cleanName,
-      content: newFileContent,
+      language: detectedLang,
+      content: defaultContent,
       isBinary: false,
-      sizeBytes: new Blob([newFileContent]).size
+      sizeBytes: 0
     };
 
-    setVirtualFiles(prev => [...prev, newFile]);
+    setWorkspaceFiles(prev => [...prev, newFile]);
+    setActiveFileId(newFile.id);
     setNewFileName('');
     setNewFileContent('');
     setShowNewFileModal(false);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus(null), 2500);
   };
 
-  // Remove Virtual File
+  // Remove Workspace File
   const handleDeleteFile = (id, name) => {
-    if (window.confirm(`Delete virtual file "${name}"?`)) {
-      setVirtualFiles(prev => prev.filter(f => f.id !== id));
-      if (activeFileId === id) setActiveFileId(null);
+    if (workspaceFiles.length <= 1) {
+      alert('You must keep at least one file in the workspace.');
+      return;
+    }
+    if (window.confirm(`Delete "${name}"?`)) {
+      const remaining = workspaceFiles.filter(f => f.id !== id);
+      setWorkspaceFiles(remaining);
+      if (activeFileId === id) {
+        setActiveFileId(remaining[0].id);
+      }
     }
   };
 
   // Handle Local File Upload
   const handleFileUpload = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const uploaded = e.target.files;
+    if (!uploaded || uploaded.length === 0) return;
 
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
+    Array.from(uploaded).forEach(file => {
       const isText = file.type.startsWith('text/') || 
                      file.name.endsWith('.txt') || 
                      file.name.endsWith('.csv') || 
@@ -520,38 +667,51 @@ export const IDEPage = ({ onNavigate }) => {
                      file.name.endsWith('.dat') || 
                      file.name.endsWith('.c') || 
                      file.name.endsWith('.cpp') || 
-                     file.name.endsWith('.h');
+                     file.name.endsWith('.h') ||
+                     file.name.endsWith('.hpp');
+
+      const reader = new FileReader();
+
+      let detectedLang = 'text';
+      if (file.name.endsWith('.c')) detectedLang = 'c';
+      else if (file.name.endsWith('.cpp') || file.name.endsWith('.cc') || file.name.endsWith('.h')) detectedLang = 'cpp';
 
       if (isText) {
         reader.onload = (event) => {
           const text = event.target.result;
-          setVirtualFiles(prev => [
-            ...prev.filter(f => f.name !== file.name),
-            {
-              id: `vf-${Date.now()}-${Math.random()}`,
-              name: file.name,
-              content: text,
-              isBinary: false,
-              sizeBytes: file.size
-            }
-          ]);
+          const newFile = {
+            id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            name: file.name,
+            language: detectedLang,
+            content: text,
+            isBinary: false,
+            sizeBytes: file.size
+          };
+          setWorkspaceFiles(prev => {
+            const filtered = prev.filter(f => f.name !== file.name);
+            return [...filtered, newFile];
+          });
+          setActiveFileId(newFile.id);
         };
         reader.readAsText(file);
       } else {
         reader.onload = (event) => {
           const dataUrl = event.target.result;
           const base64 = dataUrl.split(',')[1];
-          setVirtualFiles(prev => [
-            ...prev.filter(f => f.name !== file.name),
-            {
-              id: `vf-${Date.now()}-${Math.random()}`,
-              name: file.name,
-              content: null,
-              base64: base64,
-              isBinary: true,
-              sizeBytes: file.size
-            }
-          ]);
+          const newFile = {
+            id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            name: file.name,
+            language: 'binary',
+            content: null,
+            base64: base64,
+            isBinary: true,
+            sizeBytes: file.size
+          };
+          setWorkspaceFiles(prev => {
+            const filtered = prev.filter(f => f.name !== file.name);
+            return [...filtered, newFile];
+          });
+          setActiveFileId(newFile.id);
         };
         reader.readAsDataURL(file);
       }
@@ -560,7 +720,7 @@ export const IDEPage = ({ onNavigate }) => {
     if (fileUploadInputRef.current) fileUploadInputRef.current.value = '';
   };
 
-  // Download Generated File
+  // Download Generated File or Workspace File
   const handleDownloadFile = (file) => {
     let url;
     if (file.isBinary && file.base64) {
@@ -579,26 +739,44 @@ export const IDEPage = ({ onNavigate }) => {
 
   // Execute Code
   const handleRunCode = async () => {
+    // Determine source file to compile
+    let targetFile = activeFile;
+    if (targetFile.isBinary || targetFile.language === 'text') {
+      const codeCandidate = workspaceFiles.find(f => f.language === 'cpp' || f.name.endsWith('.cpp')) ||
+                            workspaceFiles.find(f => f.language === 'c' || f.name.endsWith('.c'));
+      if (codeCandidate) {
+        targetFile = codeCandidate;
+      } else {
+        setConsoleOutput('❌ Error: No C or C++ source file found to run. Please create or switch to a .cpp or .c file.');
+        setActiveConsoleTab('terminal');
+        return;
+      }
+    }
+
+    const runLang = targetFile.language === 'c' || targetFile.name.endsWith('.c') ? 'c' : 'cpp';
+
     setIsRunning(true);
     setExecutionResult(null);
     setOutputFiles([]);
     setActiveConsoleTab('terminal');
-    setConsoleOutput(`🚀 Compiling ${language === 'c' ? 'C17 (clang)' : 'C++17 (clang++)'}...\n`);
+    setConsoleOutput(`🚀 Compiling ${targetFile.name} with ${runLang === 'c' ? 'C17 (clang)' : 'C++17 (clang++)'}...\n`);
 
     try {
-      const payloadFiles = virtualFiles.map(f => ({
-        name: f.name,
-        content: f.content,
-        isBinary: f.isBinary,
-        base64: f.base64
-      }));
+      const payloadFiles = workspaceFiles
+        .filter(f => f.id !== targetFile.id)
+        .map(f => ({
+          name: f.name,
+          content: f.content,
+          isBinary: f.isBinary,
+          base64: f.base64
+        }));
 
       const res = await fetch(getApiUrl('/api/ide/run'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          language,
-          code,
+          language: runLang,
+          code: targetFile.content,
           stdin: stdinInput,
           files: payloadFiles
         })
@@ -659,18 +837,18 @@ export const IDEPage = ({ onNavigate }) => {
 
   // Keyboard shortcut Ctrl+Enter or Cmd+Enter to Run
   useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
+    const handleGlobalRunKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (!isRunning) handleRunCode();
       }
     };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [code, language, stdinInput, virtualFiles, isRunning]);
+    window.addEventListener('keydown', handleGlobalRunKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalRunKeyDown);
+  }, [workspaceFiles, activeFileId, stdinInput, isRunning]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 transition-colors">
       
       {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-200 dark:border-slate-800">
@@ -681,14 +859,14 @@ export const IDEPage = ({ onNavigate }) => {
               <span>Full-Featured C & C++ Web IDE</span>
             </span>
             <span className="text-xs text-slate-500 font-mono hidden sm:inline">
-              Apple clang 17 • Native Sandbox
+              Clang 17 • Multi-file Workspace
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             Standalone C & C++ IDE
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Compile C and C++ programs with custom stdin, virtual file creation/upload, and file stream (<code className="text-purple-600 dark:text-purple-400">fstream</code> / <code className="text-purple-600 dark:text-purple-400">FILE*</code>) outputs.
+            Create, save, and compile C and C++ programs with multi-file workspace, custom stdin, and file stream outputs.
           </p>
         </div>
 
@@ -699,9 +877,9 @@ export const IDEPage = ({ onNavigate }) => {
             <button
               onClick={() => handleLanguageChange('c')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                language === 'c'
+                activeLanguage === 'c'
                   ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               C (C17)
@@ -709,37 +887,14 @@ export const IDEPage = ({ onNavigate }) => {
             <button
               onClick={() => handleLanguageChange('cpp')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                language === 'cpp'
+                activeLanguage === 'cpp'
                   ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               C++ (C++17)
             </button>
           </div>
-
-          {/* Editor & Output Theme Switcher */}
-          <button
-            onClick={toggleEditorTheme}
-            className={`px-3 py-1.5 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-              editorTheme === 'dark'
-                ? 'bg-slate-800 text-amber-400 border-slate-700 hover:bg-slate-700'
-                : 'bg-white text-indigo-600 border-slate-300 hover:bg-slate-50 shadow-xs'
-            }`}
-            title={`Switch Editor and Output to ${editorTheme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          >
-            {editorTheme === 'dark' ? (
-              <>
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Dark Mode</span>
-              </>
-            )}
-          </button>
 
           {/* Run Button */}
           <button
@@ -757,80 +912,84 @@ export const IDEPage = ({ onNavigate }) => {
       {/* Main Grid: Left Files Panel (4 Cols) + Right Editor & Console (8 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Column: Virtual Filesystem & Quick Templates (4 Cols) */}
+        {/* Left Column: Workspace Files & Quick Templates (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
           
-          {/* Virtual File Manager Card */}
-          <div className={`border rounded-3xl p-5 shadow-sm transition-colors ${
-            editorTheme === 'dark'
-              ? 'bg-slate-800/90 border-slate-700/80'
-              : 'bg-white border-slate-200 shadow-slate-200/50'
-          }`}>
+          {/* Workspace Files Card */}
+          <div className="border rounded-3xl p-5 shadow-sm transition-colors bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/80 shadow-slate-200/50 dark:shadow-none">
             <div className="flex items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <FolderOpen className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
-                  Virtual Filesystem
+                  Workspace Files
                 </h3>
               </div>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold">
-                {virtualFiles.length} file(s)
+                {workspaceFiles.length} file(s)
               </span>
             </div>
 
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
-              Files created or uploaded here are written into the sandbox execution folder so your C/C++ code can open them via relative paths (<code className="text-purple-600">fstream</code>, <code className="text-purple-600">fopen</code>).
+              Files are saved in LocalStorage and sent into the sandbox environment so your programs can include headers (<code className="text-purple-600 dark:text-purple-400">#include "..."</code>) or read data (<code className="text-purple-600 dark:text-purple-400">fstream</code>).
             </p>
 
             {/* File List */}
-            <div className="space-y-2 mb-4 max-h-52 overflow-y-auto pr-1">
-              {virtualFiles.map(file => (
-                <div
-                  key={file.id}
-                  className={`flex items-center justify-between p-2.5 rounded-2xl border transition-colors group ${
-                    editorTheme === 'dark'
-                      ? 'bg-slate-900/60 border-slate-700/60 hover:border-purple-500'
-                      : 'bg-slate-50 border-slate-200 hover:border-purple-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                    <div className="truncate">
-                      <div className="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 truncate">
-                        {file.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {file.sizeBytes || 0} bytes • {file.isBinary ? 'Binary' : 'Text'}
+            <div className="space-y-2 mb-4 max-h-56 overflow-y-auto pr-1">
+              {workspaceFiles.map(file => {
+                const isActive = file.id === activeFile.id;
+                return (
+                  <div
+                    key={file.id}
+                    onClick={() => setActiveFileId(file.id)}
+                    className={`flex items-center justify-between p-2.5 rounded-2xl border transition-all cursor-pointer group ${
+                      isActive
+                        ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 dark:border-purple-600/80 shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700/60 hover:border-purple-300 dark:hover:border-purple-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {file.name.endsWith('.c') ? (
+                        <FileCode className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                      ) : file.name.endsWith('.cpp') || file.name.endsWith('.cc') || file.name.endsWith('.h') ? (
+                        <FileCode className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                      ) : (
+                        <FileText className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                      )}
+                      <div className="truncate">
+                        <div className={`text-xs font-bold font-mono truncate ${
+                          isActive
+                            ? 'text-purple-900 dark:text-purple-300'
+                            : 'text-slate-800 dark:text-slate-200'
+                        }`}>
+                          {file.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          {file.sizeBytes || 0} bytes • {file.isBinary ? 'Binary' : file.language ? file.language.toUpperCase() : 'TEXT'}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => setActiveFileId(file.id)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                      title="View / Edit Content"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteFile(file.id, file.name)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                      title="Delete File"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleDownloadFile(file)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                        title="Download File"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                      {workspaceFiles.length > 1 && (
+                        <button
+                          onClick={() => handleDeleteFile(file.id, file.name)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          title="Delete File"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-
-              {virtualFiles.length === 0 && (
-                <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-700/80 rounded-2xl">
-                  <FileText className="w-6 h-6 text-slate-300 mx-auto mb-1" />
-                  <div className="text-xs text-slate-500">No auxiliary files attached.</div>
-                  <div className="text-[10px] text-slate-400">Click below to create or upload files.</div>
-                </div>
-              )}
+                );
+              })}
             </div>
 
             {/* Actions: + New File & Upload File */}
@@ -862,11 +1021,7 @@ export const IDEPage = ({ onNavigate }) => {
           </div>
 
           {/* Quick Starter Templates Card */}
-          <div className={`border rounded-3xl p-5 shadow-sm transition-colors ${
-            editorTheme === 'dark'
-              ? 'bg-slate-800/90 border-slate-700/80'
-              : 'bg-white border-slate-200 shadow-slate-200/50'
-          }`}>
+          <div className="border rounded-3xl p-5 shadow-sm transition-colors bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/80 shadow-slate-200/50 dark:shadow-none">
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span>Quick Code Templates</span>
@@ -875,34 +1030,26 @@ export const IDEPage = ({ onNavigate }) => {
             <div className="space-y-2 text-xs">
               <button
                 onClick={() => handleLoadTemplate('boilerplate')}
-                className={`w-full text-left p-2.5 rounded-xl border transition-colors flex items-center justify-between ${
-                  editorTheme === 'dark'
-                    ? 'bg-slate-900/40 hover:bg-purple-950/30 border-slate-700/60'
-                    : 'bg-slate-50 hover:bg-purple-50 border-slate-200'
-                }`}
+                className="w-full text-left p-2.5 rounded-xl border transition-colors flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-purple-50 dark:hover:bg-purple-950/30 border-slate-200 dark:border-slate-700/60"
               >
                 <div>
                   <div className="font-bold text-slate-800 dark:text-slate-200">
-                    {language === 'c' ? 'Standard C17 Program' : 'Standard C++17 Program'}
+                    {activeLanguage === 'c' ? 'Standard C17 Program' : 'Standard C++17 Program'}
                   </div>
-                  <div className="text-[10px] text-slate-400">Basic I/O & main() harness</div>
+                  <div className="text-[10px] text-slate-400">Basic I/O & main() harness with using namespace std;</div>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
               <button
                 onClick={() => handleLoadTemplate('stream')}
-                className={`w-full text-left p-2.5 rounded-xl border transition-colors flex items-center justify-between ${
-                  editorTheme === 'dark'
-                    ? 'bg-slate-900/40 hover:bg-purple-950/30 border-slate-700/60'
-                    : 'bg-slate-50 hover:bg-purple-50 border-slate-200'
-                }`}
+                className="w-full text-left p-2.5 rounded-xl border transition-colors flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-purple-50 dark:hover:bg-purple-950/30 border-slate-200 dark:border-slate-700/60"
               >
                 <div>
                   <div className="font-bold text-slate-800 dark:text-slate-200">
-                    {language === 'c' ? 'C File Stream Demo (fopen)' : 'C++ File Stream Demo (fstream)'}
+                    {activeLanguage === 'c' ? 'C File Stream Demo (fopen)' : 'C++ File Stream Demo (fstream)'}
                   </div>
-                  <div className="text-[10px] text-slate-400">Read & write files on disk</div>
+                  <div className="text-[10px] text-slate-400">Read & write disk files automatically</div>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
@@ -915,50 +1062,103 @@ export const IDEPage = ({ onNavigate }) => {
         <div className="lg:col-span-8 space-y-4">
           
           {/* Code Editor Container */}
-          <div className={`relative border rounded-3xl shadow-xl overflow-hidden flex flex-col transition-colors ${
-            editorTheme === 'dark'
-              ? 'bg-slate-950 border-slate-800 shadow-purple-950/20'
-              : 'bg-white border-slate-200 shadow-slate-200/60'
-          }`}>
+          <div className="relative border rounded-3xl shadow-xl overflow-hidden flex flex-col transition-colors bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-slate-200/60 dark:shadow-purple-950/20">
             
-            {/* Editor Toolbar */}
-            <div className={`px-5 py-3 border-b flex flex-wrap items-center justify-between gap-3 transition-colors ${
-              editorTheme === 'dark' ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100/90 border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500" />
-                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className={`text-xs font-mono font-bold ml-2 ${
-                  editorTheme === 'dark' ? 'text-slate-400' : 'text-slate-700'
-                }`}>
-                  {language === 'c' ? 'main.c (C17)' : 'main.cpp (C++17)'}
-                </span>
-                <span className="text-[10px] text-slate-400 hidden sm:inline">
-                  • Autocomplete Active (Tab to accept)
-                </span>
+            {/* Editor File Tabs & Toolbar */}
+            <div className="px-4 pt-3 pb-0 border-b flex flex-wrap items-center justify-between gap-2 transition-colors bg-slate-100/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800">
+              
+              {/* File Tabs Bar */}
+              <div className="flex items-center overflow-x-auto no-scrollbar gap-1 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mr-2 flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                </div>
+
+                {workspaceFiles.map((file) => {
+                  const isActive = file.id === activeFile.id;
+                  return (
+                    <div
+                      key={file.id}
+                      onClick={() => setActiveFileId(file.id)}
+                      className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-t-xl text-xs font-mono font-bold cursor-pointer transition-all border-t border-l border-r ${
+                        isActive
+                          ? isDark
+                            ? 'bg-slate-950 text-white border-slate-700 shadow-sm -mb-px pb-2'
+                            : 'bg-white text-purple-700 border-slate-300 shadow-xs -mb-px pb-2'
+                          : isDark
+                          ? 'bg-slate-900 text-slate-400 hover:text-slate-200 border-transparent hover:bg-slate-800/80'
+                          : 'bg-slate-200/70 text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200'
+                      }`}
+                    >
+                      {file.name.endsWith('.c') ? (
+                        <FileCode className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                      ) : file.name.endsWith('.cpp') || file.name.endsWith('.cc') || file.name.endsWith('.h') ? (
+                        <FileCode className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                      ) : (
+                        <FileText className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span className="truncate max-w-[120px]">{file.name}</span>
+                      {workspaceFiles.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteFile(file.id, file.name);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 hover:text-rose-500 p-0.5 rounded transition-opacity"
+                          title="Delete file"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* + New File Tab Button */}
+                <button
+                  onClick={() => setShowNewFileModal(true)}
+                  className="px-2.5 py-1.5 rounded-t-xl text-xs font-bold flex items-center gap-1 transition-colors text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                  title="Create a New File"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">New File</span>
+                </button>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Right Action Buttons */}
+              <div className="flex items-center gap-2 pb-2 flex-shrink-0">
+                {saveStatus === 'saved' && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 animate-in fade-in duration-150">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Saved</span>
+                  </span>
+                )}
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSaveFile}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 border-purple-200 dark:border-purple-800/80 shadow-xs"
+                  title="Save File to LocalStorage (⌘S / Ctrl+S)"
+                >
+                  <Save className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                  <span>Save</span>
+                </button>
+
+                {/* Copy Button */}
                 <button
                   onClick={handleCopyCode}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-                    editorTheme === 'dark'
-                      ? 'text-slate-300 hover:bg-slate-800 border-slate-700'
-                      : 'text-slate-700 hover:bg-white bg-slate-50 border-slate-300'
-                  }`}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                  title="Copy code to clipboard"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
                 </button>
 
+                {/* Reset Button */}
                 <button
                   onClick={handleResetCode}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-                    editorTheme === 'dark'
-                      ? 'text-slate-300 hover:bg-slate-800 border-slate-700'
-                      : 'text-slate-700 hover:bg-white bg-slate-50 border-slate-300'
-                  }`}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700"
                   title="Reset to starter template"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -968,18 +1168,12 @@ export const IDEPage = ({ onNavigate }) => {
             </div>
 
             {/* Code Textarea with Line Numbers */}
-            <div className={`relative flex font-mono text-xs sm:text-sm h-[400px] overflow-hidden ${
-              editorTheme === 'dark' ? 'bg-slate-950' : 'bg-white'
-            }`}>
+            <div className="relative flex font-mono text-xs sm:text-sm h-[400px] overflow-hidden bg-white dark:bg-slate-950 transition-colors">
               
               {/* Line Gutter */}
               <div
                 ref={lineGutterRef}
-                className={`select-none text-right pr-3 pl-3 pt-4 pb-4 font-mono text-xs leading-relaxed border-r overflow-hidden transition-colors ${
-                  editorTheme === 'dark'
-                    ? 'bg-slate-900/40 text-slate-600 border-slate-800/80'
-                    : 'bg-slate-100/60 text-slate-400 border-slate-200'
-                }`}
+                className="select-none text-right pr-3 pl-3 pt-4 pb-4 font-mono text-xs leading-relaxed border-r overflow-hidden transition-colors bg-slate-100/60 dark:bg-slate-900/40 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-800/80"
                 style={{ width: '48px' }}
               >
                 {linesArray.map(n => (
@@ -990,27 +1184,19 @@ export const IDEPage = ({ onNavigate }) => {
               {/* Source Input */}
               <textarea
                 ref={textareaRef}
-                value={code}
+                value={activeCode}
                 onChange={handleCodeChange}
                 onKeyDown={handleEditorKeyDown}
                 onScroll={handleEditorScroll}
                 spellCheck="false"
-                className={`flex-1 p-4 pt-4 pb-4 font-mono text-xs sm:text-sm focus:outline-none resize-none leading-relaxed border-0 font-medium overflow-y-auto transition-colors ${
-                  editorTheme === 'dark'
-                    ? 'bg-slate-950 text-emerald-400 caret-emerald-400 selection:bg-purple-900 selection:text-white'
-                    : 'bg-white text-slate-900 caret-purple-600 selection:bg-purple-200 selection:text-purple-900'
-                }`}
+                className="flex-1 p-4 pt-4 pb-4 font-mono text-xs sm:text-sm focus:outline-none resize-none leading-relaxed border-0 font-medium overflow-y-auto transition-colors bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 caret-purple-600 dark:caret-emerald-400 selection:bg-purple-200 dark:selection:bg-purple-900 selection:text-purple-900 dark:selection:text-white"
                 style={{ lineHeight: '21px' }}
-                placeholder="// Type your C/C++ code here..."
+                placeholder={`// Enter code for ${activeFile.name}...`}
               />
 
               {/* AUTOCOMPLETE POPUP WIDGET */}
               {suggestions.length > 0 && (
-                <div className={`absolute z-30 left-16 bottom-12 rounded-2xl border shadow-2xl overflow-hidden max-w-xs w-72 animate-in fade-in zoom-in-95 duration-150 ${
-                  editorTheme === 'dark'
-                    ? 'bg-slate-900/95 border-slate-700 text-slate-200 backdrop-blur-md'
-                    : 'bg-white/95 border-slate-300 text-slate-800 backdrop-blur-md'
-                }`}>
+                <div className="absolute z-30 left-16 bottom-12 rounded-2xl border shadow-2xl overflow-hidden max-w-xs w-72 animate-in fade-in zoom-in-95 duration-150 bg-white/95 dark:bg-slate-900/95 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 backdrop-blur-md">
                   <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 text-purple-600 dark:text-purple-400 flex items-center justify-between">
                     <span>Suggestions ({suggestions.length})</span>
                     <span className="text-[9px] text-slate-400">Tab / ↵ to insert</span>
@@ -1023,7 +1209,7 @@ export const IDEPage = ({ onNavigate }) => {
                         className={`px-3 py-2 rounded-xl text-xs font-mono cursor-pointer flex items-center justify-between transition-colors ${
                           selectedSuggestionIndex === idx
                             ? 'bg-purple-600 text-white font-bold'
-                            : editorTheme === 'dark'
+                            : isDark
                             ? 'hover:bg-slate-800 text-slate-300'
                             : 'hover:bg-slate-100 text-slate-700'
                         }`}
@@ -1045,42 +1231,36 @@ export const IDEPage = ({ onNavigate }) => {
             </div>
 
             {/* Editor Footer Status */}
-            <div className={`px-5 py-2 border-t flex flex-wrap items-center justify-between text-[11px] font-mono transition-colors ${
-              editorTheme === 'dark' ? 'bg-slate-900/80 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
-            }`}>
+            <div className="px-5 py-2 border-t flex flex-wrap items-center justify-between text-[11px] font-mono transition-colors bg-slate-100 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-4">
-                <span>Compiler: <strong className="text-purple-500 font-bold">{language === 'c' ? 'clang (C17)' : 'clang++ (C++17)'}</strong></span>
+                <span>File: <strong className="text-purple-600 dark:text-purple-400 font-bold">{activeFile.name}</strong></span>
+                <span>Language: <strong className="text-purple-500 font-bold">{activeLanguage === 'c' ? 'clang (C17)' : activeLanguage === 'cpp' ? 'clang++ (C++17)' : 'Plain Text'}</strong></span>
                 <span>Lines: <strong>{lineCount}</strong></span>
-                <span>Length: <strong>{code.length} chars</strong></span>
               </div>
-              <div className="flex items-center gap-2">
-                <span>Theme: <strong>{editorTheme === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong></span>
+              <div className="flex items-center gap-3">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>LocalStorage Synced</span>
+                </span>
+                <span>• Press <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">⌘S</kbd> to save</span>
                 <span>• Press <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">⌘+Enter</kbd> to run</span>
               </div>
             </div>
 
           </div>
 
-          {/* Console / Stdin / Output Files Section (MATCHES EDITOR LIGHT & DARK THEME) */}
-          <div className={`border rounded-3xl shadow-xl overflow-hidden transition-colors ${
-            editorTheme === 'dark'
-              ? 'bg-slate-900 border-slate-800 shadow-purple-950/20'
-              : 'bg-white border-slate-200 shadow-slate-200/60'
-          }`}>
+          {/* Console / Stdin / Output Files Section */}
+          <div className="border rounded-3xl shadow-xl overflow-hidden transition-colors bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-slate-200/60 dark:shadow-purple-950/20">
             
             {/* Tab Navigation */}
-            <div className={`px-5 py-2.5 border-b flex items-center justify-between transition-colors ${
-              editorTheme === 'dark'
-                ? 'bg-slate-950 border-slate-800'
-                : 'bg-slate-100/90 border-slate-200'
-            }`}>
+            <div className="px-5 py-2.5 border-b flex items-center justify-between transition-colors bg-slate-100/90 dark:bg-slate-950 border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActiveConsoleTab('terminal')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
                     activeConsoleTab === 'terminal'
                       ? 'bg-purple-600 text-white shadow-xs'
-                      : editorTheme === 'dark'
+                      : isDark
                       ? 'text-slate-400 hover:text-white'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
@@ -1094,7 +1274,7 @@ export const IDEPage = ({ onNavigate }) => {
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
                     activeConsoleTab === 'stdin'
                       ? 'bg-purple-600 text-white shadow-xs'
-                      : editorTheme === 'dark'
+                      : isDark
                       ? 'text-slate-400 hover:text-white'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
@@ -1111,7 +1291,7 @@ export const IDEPage = ({ onNavigate }) => {
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
                     activeConsoleTab === 'outputFiles'
                       ? 'bg-purple-600 text-white shadow-xs'
-                      : editorTheme === 'dark'
+                      : isDark
                       ? 'text-slate-400 hover:text-white'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
@@ -1157,29 +1337,19 @@ export const IDEPage = ({ onNavigate }) => {
               )}
             </div>
 
-            {/* TAB 1: OUTPUT TERMINAL (LIGHT & DARK STYLING) */}
+            {/* TAB 1: OUTPUT TERMINAL */}
             {activeConsoleTab === 'terminal' && (
-              <div className={`p-4 transition-colors ${
-                editorTheme === 'dark' ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-900'
-              }`}>
-                <pre className={`font-mono text-xs overflow-x-auto min-h-[160px] max-h-[280px] leading-relaxed whitespace-pre-wrap p-3 rounded-2xl border transition-colors ${
-                  editorTheme === 'dark'
-                    ? 'bg-slate-900/80 border-slate-800/80 text-slate-300'
-                    : 'bg-white border-slate-200 text-slate-800 shadow-inner'
-                }`}>
+              <div className="p-4 transition-colors bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200">
+                <pre className="font-mono text-xs overflow-x-auto min-h-[160px] max-h-[280px] leading-relaxed whitespace-pre-wrap p-3 rounded-2xl border transition-colors bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-300 shadow-inner">
                   {consoleOutput || 'Ready to run. Click "Run Code" or press ⌘+Enter.'}
                 </pre>
               </div>
             )}
 
-            {/* TAB 2: STDIN INPUT (LIGHT & DARK STYLING) */}
+            {/* TAB 2: STDIN INPUT */}
             {activeConsoleTab === 'stdin' && (
-              <div className={`p-4 transition-colors ${
-                editorTheme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'
-              }`}>
-                <label className={`block text-[11px] font-bold mb-1.5 ${
-                  editorTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-                }`}>
+              <div className="p-4 transition-colors bg-slate-50 dark:bg-slate-950">
+                <label className="block text-[11px] font-bold mb-1.5 text-slate-600 dark:text-slate-400">
                   Custom Standard Input (Piped directly into <code className="text-purple-600 dark:text-purple-400">cin</code> / <code className="text-purple-600 dark:text-purple-400">scanf</code>):
                 </label>
                 <textarea
@@ -1187,22 +1357,16 @@ export const IDEPage = ({ onNavigate }) => {
                   onChange={(e) => setStdinInput(e.target.value)}
                   rows={6}
                   placeholder="Enter inputs here (e.g. text, numbers separated by spaces or newlines)..."
-                  className={`w-full p-3 rounded-xl font-mono text-xs border focus:outline-none focus:border-purple-500 leading-relaxed transition-colors ${
-                    editorTheme === 'dark'
-                      ? 'bg-slate-900 text-slate-100 border-slate-800'
-                      : 'bg-white text-slate-900 border-slate-300 placeholder:text-slate-400'
-                  }`}
+                  className="w-full p-3 rounded-xl font-mono text-xs border focus:outline-none focus:border-purple-500 leading-relaxed transition-colors bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-800 placeholder:text-slate-400"
                 />
               </div>
             )}
 
-            {/* TAB 3: GENERATED OUTPUT FILES (LIGHT & DARK STYLING) */}
+            {/* TAB 3: GENERATED OUTPUT FILES */}
             {activeConsoleTab === 'outputFiles' && (
-              <div className={`p-4 min-h-[180px] transition-colors ${
-                editorTheme === 'dark' ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-900'
-              }`}>
+              <div className="p-4 min-h-[180px] transition-colors bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200">
                 {outputFiles.length === 0 ? (
-                  <div className={`text-center py-8 ${editorTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <div className="text-center py-8 text-slate-400 dark:text-slate-500">
                     <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-xs font-bold">No output files produced yet.</p>
                     <p className="text-[11px] mt-1 max-w-sm mx-auto opacity-75">
@@ -1218,31 +1382,21 @@ export const IDEPage = ({ onNavigate }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {outputFiles.map((file, i) => (
-                        <div key={i} className={`border rounded-xl p-3.5 flex flex-col justify-between transition-colors ${
-                          editorTheme === 'dark'
-                            ? 'bg-slate-900 border-slate-800'
-                            : 'bg-white border-slate-200 shadow-sm'
-                        }`}>
+                        <div key={i} className="border rounded-xl p-3.5 flex flex-col justify-between transition-colors bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2 font-mono text-xs font-bold text-purple-600 dark:text-purple-300">
                                 <FileText className="w-4 h-4 text-purple-500" />
                                 <span>{file.name}</span>
                               </div>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                                editorTheme === 'dark' ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'
-                              }`}>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                 {file.sizeBytes} bytes
                               </span>
                             </div>
 
                             {/* Preview snippet for text files */}
                             {!file.isBinary && file.content && (
-                              <pre className={`text-[11px] font-mono p-2.5 rounded-lg border max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed mt-2 ${
-                                editorTheme === 'dark'
-                                  ? 'bg-slate-950 border-slate-800/80 text-slate-300'
-                                  : 'bg-slate-50 border-slate-200 text-slate-800'
-                              }`}>
+                              <pre className="text-[11px] font-mono p-2.5 rounded-lg border max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed mt-2 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-300">
                                 {file.content.slice(0, 300)}
                                 {file.content.length > 300 ? '...' : ''}
                               </pre>
@@ -1255,9 +1409,7 @@ export const IDEPage = ({ onNavigate }) => {
                             )}
                           </div>
 
-                          <div className={`mt-3 pt-2 border-t flex items-center justify-end gap-2 ${
-                            editorTheme === 'dark' ? 'border-slate-800' : 'border-slate-100'
-                          }`}>
+                          <div className="mt-3 pt-2 border-t flex items-center justify-end gap-2 border-slate-100 dark:border-slate-800">
                             <button
                               onClick={() => handleDownloadFile(file)}
                               className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
@@ -1280,7 +1432,7 @@ export const IDEPage = ({ onNavigate }) => {
 
       </div>
 
-      {/* MODAL: CREATE NEW VIRTUAL FILE */}
+      {/* MODAL: CREATE NEW WORKSPACE FILE */}
       {showNewFileModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl">
@@ -1289,7 +1441,7 @@ export const IDEPage = ({ onNavigate }) => {
               <span>Create New Workspace File</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Enter a filename (e.g. <code className="text-purple-500">input.txt</code>, <code className="text-purple-500">matrix.dat</code>) and its text content.
+              Enter a filename with extension (e.g. <code className="text-purple-500">solution.cpp</code>, <code className="text-purple-500">helper.h</code>, <code className="text-purple-500">data.txt</code>).
             </p>
 
             <form onSubmit={handleCreateFile} className="space-y-4">
@@ -1301,23 +1453,23 @@ export const IDEPage = ({ onNavigate }) => {
                   type="text"
                   value={newFileName}
                   onChange={(e) => setNewFileName(e.target.value)}
-                  placeholder="e.g. data.txt"
+                  placeholder="e.g. solution.cpp, helper.h, input.txt"
                   required
                   autoFocus
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none focus:border-purple-500 text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Initial Content
+                  Initial Content (Optional)
                 </label>
                 <textarea
                   value={newFileContent}
                   onChange={(e) => setNewFileContent(e.target.value)}
                   rows={7}
-                  placeholder="Type initial file contents..."
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:border-purple-500 leading-relaxed"
+                  placeholder="Leave empty to use standard language boilerplate..."
+                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:border-purple-500 leading-relaxed text-slate-900 dark:text-white"
                 />
               </div>
 
@@ -1331,7 +1483,7 @@ export const IDEPage = ({ onNavigate }) => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-colors"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-colors shadow-md shadow-purple-600/20"
                 >
                   Create File
                 </button>
@@ -1341,9 +1493,9 @@ export const IDEPage = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* MODAL: VIEW / EDIT EXISTING VIRTUAL FILE */}
-      {activeFileId && (() => {
-        const file = virtualFiles.find(f => f.id === activeFileId);
+      {/* MODAL: INSPECT / VIEW WORKSPACE FILE */}
+      {inspectFileId && (() => {
+        const file = workspaceFiles.find(f => f.id === inspectFileId);
         if (!file) return null;
 
         return (
@@ -1375,14 +1527,14 @@ export const IDEPage = ({ onNavigate }) => {
                       value={file.content || ''}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setVirtualFiles(prev => prev.map(f => f.id === activeFileId ? {
+                        setWorkspaceFiles(prev => prev.map(f => f.id === inspectFileId ? {
                           ...f,
                           content: val,
                           sizeBytes: new Blob([val]).size
                         } : f));
                       }}
                       rows={10}
-                      className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:border-purple-500 leading-relaxed"
+                      className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:border-purple-500 leading-relaxed text-slate-900 dark:text-white"
                     />
                   </div>
                 )}
@@ -1391,7 +1543,7 @@ export const IDEPage = ({ onNavigate }) => {
                   <button
                     type="button"
                     onClick={() => handleDownloadFile(file)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-200"
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-700"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download</span>
@@ -1399,7 +1551,7 @@ export const IDEPage = ({ onNavigate }) => {
 
                   <button
                     type="button"
-                    onClick={() => setActiveFileId(null)}
+                    onClick={() => setInspectFileId(null)}
                     className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-colors"
                   >
                     Done

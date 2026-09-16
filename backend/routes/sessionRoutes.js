@@ -13,12 +13,12 @@ const getJoinUrl = (req, roomCode) => {
 // POST /api/sessions/create - Create room & generate QR
 router.post('/create', async (req, res) => {
   try {
-    const { quizId } = req.body;
+    const { quizId, quizData } = req.body;
     if (!quizId) {
       return res.status(400).json({ success: false, message: 'quizId is required' });
     }
 
-    const room = await createRoom(quizId);
+    const room = await createRoom(quizId, null, quizData);
     const joinUrl = getJoinUrl(req, room.roomCode);
 
     // Generate QR Code Data URL with optimal contrast

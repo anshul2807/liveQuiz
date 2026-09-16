@@ -6,7 +6,11 @@ const router = express.Router();
 // GET all quizzes
 router.get('/', async (req, res) => {
   try {
-    const quizzes = await getAllQuizzes();
+    let quizzes = await getAllQuizzes();
+    const { subject } = req.query;
+    if (subject && subject !== 'all') {
+      quizzes = quizzes.filter(q => q.subjectId === subject);
+    }
     res.json({ success: true, quizzes });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

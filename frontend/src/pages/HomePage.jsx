@@ -31,7 +31,7 @@ export const HomePage = ({ onNavigate }) => {
         </h1>
 
         <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-          Real-time synchronized countdowns, live instant scoring, and interactive C++ coding challenges.
+          Real-time synchronized countdowns, live instant scoring, and interactive C & C++ coding challenges across OOPs and DSA.
         </p>
       </div>
 
@@ -83,26 +83,26 @@ export const HomePage = ({ onNavigate }) => {
                 <BookOpen className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Self-Paced & Timed
+                2 Subjects • 270 MCQs
               </span>
               <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">Practice MCQs</h2>
               <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
-                225 Questions across Units I, II & III with answers & mock tests.
+                270 Questions across OOPs in CPP & DSA with answers & mock tests.
               </p>
             </div>
 
             <div className="space-y-1 mb-4 text-xs text-slate-600 dark:text-slate-300">
               <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
-                <span>Unit I: Concepts</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">75 Qs</span>
+                <span>OOPs in CPP</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">135 Qs (45/Unit)</span>
               </div>
               <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
-                <span>Unit II: Pointers</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">75 Qs</span>
+                <span>DSA</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">135 Qs (45/Unit)</span>
               </div>
               <div className="flex items-center justify-between py-0.5">
-                <span>Unit III: Streams</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">75 Qs</span>
+                <span>Programming</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">C & C++ Options</span>
               </div>
             </div>
           </div>
@@ -112,12 +112,12 @@ export const HomePage = ({ onNavigate }) => {
             className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Open MCQs</span>
+            <span>Practice 270 MCQs</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* CARD 3: C++ GUIDED CODING LAB */}
+        {/* CARD 3: C/C++ GUIDED CODING LAB */}
         <div className="bg-white dark:bg-slate-800/90 border-2 border-emerald-400 dark:border-emerald-500/50 rounded-3xl p-5 shadow-xl backdrop-blur transition-colors flex flex-col justify-between">
           <div>
             <div className="text-center mb-4">
@@ -125,26 +125,26 @@ export const HomePage = ({ onNavigate }) => {
                 <Code2 className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                6 Curriculum Labs
+                36 Curriculum Labs
               </span>
-              <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">C++ Hands-On Lab</h2>
+              <h2 className="text-base font-black text-slate-900 dark:text-white mt-1.5">Coding Lab</h2>
               <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
-                Structured test-driven problems (3 Easy, 2 Med, 1 Hard).
+                36 Problems (6 per unit) with dual C & C++ compilers and test runner.
               </p>
             </div>
 
             <div className="space-y-1 mb-4 text-xs text-slate-600 dark:text-slate-300">
               <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
-                <span>Unit 1: Classes</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">2 Easy</span>
+                <span>OOPs in CPP</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">18 Problems</span>
               </div>
               <div className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-700/60">
-                <span>Unit 2: Pointers</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">1 Easy, 1 Med</span>
+                <span>DSA</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">18 Problems</span>
               </div>
               <div className="flex items-center justify-between py-0.5">
-                <span>Unit 3: Streams</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">1 Med, 1 Hard</span>
+                <span>Compiler Engine</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">clang & clang++</span>
               </div>
             </div>
           </div>
@@ -154,7 +154,7 @@ export const HomePage = ({ onNavigate }) => {
             className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Open Lab</span>
+            <span>Open 36 Labs</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -261,14 +261,14 @@ export const HomePage = ({ onNavigate }) => {
               <Code className="w-5 h-5" />
             </div>
             <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center justify-between">
-              <span>C++ Code Challenges</span>
+              <span>C & C++ Code Challenges</span>
               <ArrowRight className="w-4 h-4 text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
             </h4>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
-              Hands-on stream I/O, binary in-place updates, POD persistence, initializer lists, and RAII safety.
+              36 production labs covering OOPs, classes, pointers, streams, sorting, linked lists, and stacks.
             </p>
             <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
-              <span>Open 6 Challenges & MCQs</span>
+              <span>Open 36 Challenges & 270 MCQs</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </div>

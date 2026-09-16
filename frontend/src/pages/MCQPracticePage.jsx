@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SYLLABUS_UNITS, QUIZ_QUESTIONS } from '../data/quizData.js';
+import { SUBJECTS, SYLLABUS_UNITS, QUIZ_QUESTIONS } from '../data/quizData.js';
 import {
   BookOpen,
   Search,
@@ -17,13 +17,17 @@ import {
   Check,
   Play,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Code2,
+  GraduationCap
 } from 'lucide-react';
 
 export const MCQPracticePage = ({ onNavigate }) => {
+  const [selectedSubject, setSelectedSubject] = useState('dsa'); // 'oops' | 'dsa'
   const [selectedUnit, setSelectedUnit] = useState('all');
   const [selectedSet, setSelectedSet] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [selectedLanguage, setSelectedLanguage] = useState('all'); // 'all' | 'cpp' | 'c'
   const [searchQuery, setSearchQuery] = useState('');
   
   // Modes: 'practice' (instant explanation) | 'exam' (timed mock test)
@@ -40,15 +44,20 @@ export const MCQPracticePage = ({ onNavigate }) => {
   const [isExamSubmitted, setIsExamSubmitted] = useState(false);
   const [examScore, setExamScore] = useState(null);
 
+  // Available units based on selected subject
+  const availableUnits = SYLLABUS_UNITS.filter(u => u.subjectId === selectedSubject);
+
   // Available sets based on selected unit
-  const currentUnitObj = SYLLABUS_UNITS.find(u => u.id === selectedUnit);
-  const availableSets = currentUnitObj ? currentUnitObj.sets : SYLLABUS_UNITS.flatMap(u => u.sets);
+  const currentUnitObj = availableUnits.find(u => u.id === selectedUnit);
+  const availableSets = currentUnitObj ? currentUnitObj.sets : availableUnits.flatMap(u => u.sets);
 
   // Filter questions for practice
   const filteredQuestions = QUIZ_QUESTIONS.filter(q => {
+    if (q.subjectId !== selectedSubject) return false;
     if (selectedUnit !== 'all' && q.unitId !== selectedUnit) return false;
     if (selectedSet !== 'all' && q.setId !== selectedSet) return false;
     if (selectedDifficulty !== 'all' && q.difficulty !== selectedDifficulty) return false;
+    if (selectedLanguage !== 'all' && q.language !== 'both' && q.language !== selectedLanguage) return false;
     if (searchQuery.trim()) {
       const matchText = (q.question + (q.code || '') + (q.explanation || '')).toLowerCase();
       if (!matchText.includes(searchQuery.toLowerCase())) return false;
@@ -63,7 +72,17 @@ export const MCQPracticePage = ({ onNavigate }) => {
   // Reset index when filters change
   useEffect(() => {
     setCurrentIdx(0);
-  }, [selectedUnit, selectedSet, selectedDifficulty, searchQuery]);
+  }, [selectedSubject, selectedUnit, selectedSet, selectedDifficulty, selectedLanguage, searchQuery]);
+
+  // Reset unit and set when subject changes
+  const handleSubjectChange = (subjId) => {
+    setSelectedSubject(subjId);
+    setSelectedUnit('all');
+    setSelectedSet('all');
+    setSelectedDifficulty('all');
+    setSelectedLanguage('all');
+    setCurrentIdx(0);
+  };
 
   // Exam Countdown Timer
   useEffect(() => {
@@ -145,19 +164,19 @@ export const MCQPracticePage = ({ onNavigate }) => {
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
       
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-xs font-bold mb-2">
             <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            Comprehensive C++ MCQ Bank • 225 Questions (Units I, II & III)
+            Interactive Curriculum Question Bank • 270 Questions (OOPs in CPP & DSA)
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-            {examMode ? 'Mock Exam Arena' : 'C++ MCQ Practice Center'}
+            {examMode ? 'Mock Exam Arena' : 'MCQ Practice Center'}
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
             {examMode 
               ? 'Timed 15-question examination simulation with scoring and detailed performance review.'
-              : 'Master C++ core concepts, pointer semantics, stream operations, and RAII with detailed explanations.'}
+              : 'Choose your subject (OOPs in CPP or DSA) to practice Easy, Medium, and Hard sections with detailed explanations.'}
           </p>
         </div>
 
@@ -198,15 +217,47 @@ export const MCQPracticePage = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* SUBJECT SWITCHER TABS (PRACTICE MODE) */}
+      {!examMode && (
+        <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-1">
+          {SUBJECTS.map((subj) => {
+            const isSelected = selectedSubject === subj.id;
+            return (
+              <button
+                key={subj.id}
+                onClick={() => handleSubjectChange(subj.id)}
+                className={`px-5 py-2.5 rounded-2xl font-black text-sm flex items-center gap-2.5 transition-all shadow-xs ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]'
+                    : 'bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-slate-600'
+                }`}
+              >
+                {subj.id === 'dsa' ? (
+                  <Layers className={`w-4 h-4 ${isSelected ? 'text-amber-300' : 'text-purple-500'}`} />
+                ) : (
+                  <Code2 className={`w-4 h-4 ${isSelected ? 'text-blue-200' : 'text-blue-500'}`} />
+                )}
+                <span>{subj.name}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                }`}>
+                  135 Qs
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* FILTER BAR (PRACTICE MODE ONLY) */}
       {!examMode && (
         <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-5 mb-8 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             
             {/* Unit Selector */}
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-                Select Syllabus Unit
+                Syllabus Unit
               </label>
               <select
                 value={selectedUnit}
@@ -216,24 +267,24 @@ export const MCQPracticePage = ({ onNavigate }) => {
                 }}
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
               >
-                <option value="all">All Units (225 Questions)</option>
-                {SYLLABUS_UNITS.map(u => (
+                <option value="all">All Units ({selectedSubject === 'dsa' ? 'DSA 135 Qs' : 'OOPs 135 Qs'})</option>
+                {availableUnits.map(u => (
                   <option key={u.id} value={u.id}>{u.title.split(':')[0]}: {u.title.split(':')[1]}</option>
                 ))}
               </select>
             </div>
 
-            {/* Set Selector */}
+            {/* Set / Section Selector */}
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-                Question Set
+                Section (15 Qs each)
               </label>
               <select
                 value={selectedSet}
                 onChange={(e) => setSelectedSet(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
               >
-                <option value="all">All Sets ({availableSets.length} Sets)</option>
+                <option value="all">All Sections ({availableSets.length})</option>
                 {availableSets.map(s => (
                   <option key={s.id} value={s.id}>{s.title}</option>
                 ))}
@@ -251,16 +302,32 @@ export const MCQPracticePage = ({ onNavigate }) => {
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
               >
                 <option value="all">All Difficulties</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
+                <option value="easy">Easy (15 per unit)</option>
+                <option value="medium">Medium (15 per unit)</option>
+                <option value="hard">Hard (15 per unit)</option>
+              </select>
+            </div>
+
+            {/* Programming Language Option */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
+                Programming Language
+              </label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+              >
+                <option value="all">All (C & C++)</option>
+                <option value="cpp">C++ Focused</option>
+                <option value="c">C Focused</option>
               </select>
             </div>
 
             {/* Search */}
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-                Search Questions / Code
+                Search Questions
               </label>
               <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -268,7 +335,7 @@ export const MCQPracticePage = ({ onNavigate }) => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter by keyword..."
+                  placeholder="Keyword filter..."
                   className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 placeholder:text-slate-400"
                 />
               </div>
@@ -277,7 +344,7 @@ export const MCQPracticePage = ({ onNavigate }) => {
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-700/60">
-            <span>Showing <strong className="text-slate-800 dark:text-slate-200">{filteredQuestions.length}</strong> matching questions</span>
+            <span>Subject: <strong className="text-blue-600 dark:text-blue-400 uppercase font-black">{selectedSubject === 'dsa' ? 'DSA' : 'OOPs in CPP'}</strong> • Showing <strong className="text-slate-800 dark:text-slate-200">{filteredQuestions.length}</strong> matching questions</span>
             <span>Answered: <strong className="text-blue-600 dark:text-blue-400">{Object.keys(practiceAnswers).length}</strong></span>
           </div>
         </div>
@@ -298,21 +365,16 @@ export const MCQPracticePage = ({ onNavigate }) => {
                 <h2 className="text-2xl sm:text-3xl font-black text-white">
                   Score: {examScore} / {examQuestions.length} ({Math.round((examScore / examQuestions.length) * 100)}%)
                 </h2>
-                <p className="text-xs text-blue-200 mt-1">
-                  Review your answers and detailed explanations below.
-                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleStartExam}
-                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center gap-2 transition-all"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Retake New Exam</span>
-              </button>
-            </div>
+            <button
+              onClick={handleStartExam}
+              className="px-5 py-2.5 rounded-2xl bg-white text-blue-900 font-extrabold text-xs shadow-lg hover:bg-blue-50 transition-all flex items-center gap-2 self-start sm:self-center"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Retake New Exam</span>
+            </button>
           </div>
         </div>
       )}
@@ -331,6 +393,9 @@ export const MCQPracticePage = ({ onNavigate }) => {
               </span>
 
               <div className="flex items-center gap-2">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                  {activeQuestion.subjectId ? activeQuestion.subjectId.toUpperCase() : 'OOPS'}
+                </span>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   {activeQuestion.unitId}
                 </span>
@@ -341,6 +406,11 @@ export const MCQPracticePage = ({ onNavigate }) => {
                 }`}>
                   {activeQuestion.difficulty}
                 </span>
+                {activeQuestion.language && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    {activeQuestion.language === 'both' ? 'C & C++' : activeQuestion.language.toUpperCase()}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -351,12 +421,12 @@ export const MCQPracticePage = ({ onNavigate }) => {
 
             {/* Code Snippet if present */}
             {activeQuestion.code && (
-              <div className="mb-6 rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shadow-inner">
-                <div className="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
+              <div className="mb-6 rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 shadow-inner">
+                <div className="px-4 py-2 bg-slate-200/80 dark:bg-slate-900 border-b border-slate-300 dark:border-slate-800 flex items-center justify-between text-xs font-mono text-slate-700 dark:text-slate-400">
                   <span>C++ Code Reference</span>
                   <span>g++ 17</span>
                 </div>
-                <pre className="p-4 text-xs sm:text-sm font-mono text-emerald-400 overflow-x-auto leading-relaxed">
+                <pre className="p-4 text-xs sm:text-sm font-mono text-slate-900 dark:text-emerald-400 overflow-x-auto leading-relaxed">
                   {activeQuestion.code}
                 </pre>
               </div>

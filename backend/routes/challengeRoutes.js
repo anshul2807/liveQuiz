@@ -12,8 +12,14 @@ router.get('/', (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const isAdmin = authHeader && authHeader.startsWith('Bearer admin_auth_');
+    const { subject } = req.query;
 
-    const sanitized = CODING_CHALLENGES.map(c => {
+    let challenges = CODING_CHALLENGES;
+    if (subject && subject !== 'all') {
+      challenges = challenges.filter(c => c.subjectId === subject);
+    }
+
+    const sanitized = challenges.map(c => {
       if (isAdmin) return c;
       const { referenceSolution, solutionExplanation, ...studentChallenge } = c;
       return { ...studentChallenge, hasReferenceSolution: true };
@@ -91,9 +97,9 @@ function normalizeOutput(str) {
     .trim();
 }
 
-// POST /api/challenges/run - Compile and test C++ code
+// POST /api/challenges/run - Compile and test C or C++ code
 router.post('/run', async (req, res) => {
-  const { challengeId, code } = req.body;
+  const { challengeId, code, language = 'cpp' } = req.body;
 
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ success: false, message: 'Source code is required' });
@@ -104,17 +110,22 @@ router.post('/run', async (req, res) => {
     return res.status(404).json({ success: false, message: 'Challenge not found' });
   }
 
+  const isC = language.toLowerCase() === 'c';
+  const fileExt = isC ? '.c' : '.cpp';
+
   // Generate unique temp paths in OS temp directory
   const uniqueId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const tempCppPath = path.join(os.tmpdir(), `${uniqueId}.cpp`);
+  const tempSrcPath = path.join(os.tmpdir(), `${uniqueId}${fileExt}`);
   const tempBinPath = path.join(os.tmpdir(), `${uniqueId}_bin`);
 
   try {
-    // 1. Write user source code to temporary C++ file
-    fs.writeFileSync(tempCppPath, code, 'utf-8');
+    // 1. Write user source code to temporary file
+    fs.writeFileSync(tempSrcPath, code, 'utf-8');
 
-    // 2. Compile using system compiler (clang++ or g++)
-    const compileCmd = `clang++ -std=c++17 -O2 "${tempCppPath}" -o "${tempBinPath}"`;
+    // 2. Compile using system compiler (clang for C, clang++ for C++)
+    const compileCmd = isC
+      ? `clang -std=c17 -O2 -Wall "${tempSrcPath}" -o "${tempBinPath}"`
+      : `clang++ -std=c++17 -O2 -Wall "${tempSrcPath}" -o "${tempBinPath}"`;
 
     try {
       await new Promise((resolve, reject) => {
@@ -127,7 +138,7 @@ router.post('/run', async (req, res) => {
         });
       });
     } catch (compileErr) {
-      try { if (fs.existsSync(tempCppPath)) fs.unlinkSync(tempCppPath); } catch (e) {}
+      try { if (fs.existsSync(tempSrcPath)) fs.unlinkSync(tempSrcPath); } catch (e) {}
       return res.json({
         success: true,
         compiled: false,
@@ -186,7 +197,7 @@ router.post('/run', async (req, res) => {
 
     // 4. Cleanup temporary files
     try {
-      if (fs.existsSync(tempCppPath)) fs.unlinkSync(tempCppPath);
+      if (fs.existsSync(tempSrcPath)) fs.unlinkSync(tempSrcPath);
       if (fs.existsSync(tempBinPath)) fs.unlinkSync(tempBinPath);
     } catch (cleanupErr) {}
 
@@ -203,9 +214,9 @@ router.post('/run', async (req, res) => {
   } catch (globalErr) {
     // Cleanup files on exception
     try {
-      if (fs.existsSync(tempCppPath)) fs.unlinkSync(tempCppPath);
+      if (fs.existsSync(tempSrcPath)) fs.unlinkSync(tempSrcPath);
       if (fs.existsSync(tempBinPath)) fs.unlinkSync(tempBinPath);
-    } catch (e) {}
+    } catch (cleanupErr) {}
 
     return res.status(500).json({
       success: false,

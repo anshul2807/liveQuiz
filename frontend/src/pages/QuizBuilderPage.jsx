@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuiz } from '../context/QuizContext.jsx';
 import { AdminLogin } from '../components/AdminLogin.jsx';
-import { SYLLABUS_UNITS, QUIZ_QUESTIONS } from '../data/quizData.js';
-import { Plus, Trash2, CheckCircle2, Code, HelpCircle, Save, Filter, Search } from 'lucide-react';
+import { SYLLABUS_UNITS, QUIZ_QUESTIONS, SUBJECTS } from '../data/quizData.js';
+import { Plus, Trash2, CheckCircle2, Code, HelpCircle, Save, Filter, Search, Layers, Cpu } from 'lucide-react';
 import { getApiUrl } from '../services/api.js';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
@@ -13,6 +13,7 @@ export const QuizBuilderPage = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('bank'); // 'bank' | 'create'
   
   // Question Bank Explorer state
+  const [selectedSubject, setSelectedSubject] = useState('all'); // 'all' | 'oops' | 'dsa'
   const [selectedUnit, setSelectedUnit] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -20,6 +21,8 @@ export const QuizBuilderPage = ({ onNavigate }) => {
   const [customTitle, setCustomTitle] = useState('');
   const [customDescription, setCustomDescription] = useState('');
   const [customDifficulty, setCustomDifficulty] = useState('medium');
+  const [customSubjectId, setCustomSubjectId] = useState('oops');
+  const [customLanguage, setCustomLanguage] = useState('cpp');
   const [customQuestions, setCustomQuestions] = useState([
     {
       questionText: '',
@@ -45,6 +48,7 @@ export const QuizBuilderPage = ({ onNavigate }) => {
 
   // Filter bank questions
   const filteredQuestions = QUIZ_QUESTIONS.filter((q) => {
+    if (selectedSubject !== 'all' && q.subjectId !== selectedSubject) return false;
     if (selectedUnit !== 'all' && q.unitId !== selectedUnit) return false;
     if (searchQuery.trim()) {
       const matchText = (q.question + (q.code || '') + (q.explanation || '')).toLowerCase();
@@ -115,6 +119,8 @@ export const QuizBuilderPage = ({ onNavigate }) => {
           title: customTitle.trim(),
           description: customDescription.trim(),
           difficulty: customDifficulty,
+          subjectId: customSubjectId,
+          language: customLanguage,
           questions: customQuestions,
         }),
       });
@@ -147,7 +153,7 @@ export const QuizBuilderPage = ({ onNavigate }) => {
             Question Bank & Quiz Studio
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Browse 150 C++ MCQs or compose custom quizzes with timers & code snippets.
+            Browse 270 MCQs across OOPs in CPP & DSA or compose custom live sessions.
           </p>
         </div>
 
@@ -161,7 +167,7 @@ export const QuizBuilderPage = ({ onNavigate }) => {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Question Bank (150 MCQs)
+            Question Bank (270 MCQs)
           </button>
           <button
             onClick={() => setActiveTab('create')}
@@ -182,16 +188,51 @@ export const QuizBuilderPage = ({ onNavigate }) => {
           
           {/* Filter Bar */}
           <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm transition-colors">
-            <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Filter className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              
+              {/* Subject Filter */}
+              <select
+                value={selectedSubject}
+                onChange={(e) => {
+                  setSelectedSubject(e.target.value);
+                  setSelectedUnit('all');
+                }}
+                className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-purple-500 font-semibold"
+              >
+                <option value="all">All Subjects (270 Qs)</option>
+                <option value="oops">OOPs in CPP (135 Qs)</option>
+                <option value="dsa">DSA (135 Qs)</option>
+              </select>
+
+              {/* Unit Filter */}
               <select
                 value={selectedUnit}
                 onChange={(e) => setSelectedUnit(e.target.value)}
                 className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-purple-500"
               >
-                <option value="all">All Syllabus Units</option>
-                <option value="unit1">Unit 1: Concepts & Basics (75 Qs)</option>
-                <option value="unit2">Unit 2: Pointers & Strings (75 Qs)</option>
+                {selectedSubject === 'oops' ? (
+                  <>
+                    <option value="all">All Units (135 Qs)</option>
+                    <option value="unit1">Unit 1: Concepts & Basics (45 Qs)</option>
+                    <option value="unit2">Unit 2: Classes, Pointers & Objects (45 Qs)</option>
+                    <option value="unit3">Unit 3: File Streams & Polymorphism (45 Qs)</option>
+                  </>
+                ) : selectedSubject === 'dsa' ? (
+                  <>
+                    <option value="all">All Units (135 Qs)</option>
+                    <option value="unit1">Unit 1: Arrays, Searching & Sorting (45 Qs)</option>
+                    <option value="unit2">Unit 2: Linked Lists & Two-Way Lists (45 Qs)</option>
+                    <option value="unit3">Unit 3: Stacks, Notation & Queues (45 Qs)</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="all">All Syllabus Units (270 Qs)</option>
+                    <option value="unit1">Unit 1 (90 Qs)</option>
+                    <option value="unit2">Unit 2 (90 Qs)</option>
+                    <option value="unit3">Unit 3 (90 Qs)</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -202,7 +243,7 @@ export const QuizBuilderPage = ({ onNavigate }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search C++ code, concepts..."
+                placeholder="Search question, code, explanation..."
                 className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-purple-500 text-sm text-slate-800 dark:text-slate-200 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
@@ -214,69 +255,91 @@ export const QuizBuilderPage = ({ onNavigate }) => {
 
           {/* Questions Grid */}
           <div className="space-y-4">
-            {filteredQuestions.map((q, idx) => (
-              <div
-                key={q.id || idx}
-                className="bg-white dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-6 shadow-sm hover:border-purple-300 dark:hover:border-slate-600 transition-all"
-              >
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
-                    {q.unitId.toUpperCase()} • Set {q.setId} • #{idx + 1}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
-                    {q.difficulty}
-                  </span>
-                </div>
-
-                <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg mb-3">
-                  {q.question}
-                </h3>
-
-                {/* Code Snippet Box (Light/Dark Mode) */}
-                {q.code && (
-                  <div className="mb-4 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950">
-                    <div className="bg-slate-200/80 dark:bg-slate-900 px-3 py-1 text-xs text-slate-600 dark:text-slate-400 font-mono border-b border-slate-300 dark:border-slate-800 flex items-center gap-1.5">
-                      <Code className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                      <span className="font-semibold">C++ Snippet</span>
+            {filteredQuestions.map((q, idx) => {
+              const isDSA = q.subjectId === 'dsa';
+              return (
+                <div
+                  key={q.id || idx}
+                  className="bg-white dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-6 shadow-sm hover:border-purple-300 dark:hover:border-slate-600 transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                        isDSA
+                          ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50'
+                          : 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/50'
+                      }`}>
+                        {isDSA ? 'DSA' : 'OOPs'} • {q.unitId.toUpperCase()} • Set {q.setId || '1'} • #{idx + 1}
+                      </span>
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 uppercase">
+                        {q.language || 'C++'}
+                      </span>
                     </div>
-                    <pre className="p-3.5 text-xs sm:text-sm font-mono text-indigo-950 dark:text-emerald-300 overflow-x-auto whitespace-pre bg-white/60 dark:bg-transparent">
-                      <code>{q.code}</code>
-                    </pre>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
+                      {q.difficulty}
+                    </span>
                   </div>
-                )}
 
-                {/* 4 Choices */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                  {q.options.map((opt, optIdx) => {
-                    const isCorrect = optIdx === q.correctAnswer;
-                    return (
-                      <div
-                        key={optIdx}
-                        className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between border transition-colors ${
-                          isCorrect
-                            ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-200'
-                            : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <span>
-                          <strong className="mr-1.5 text-slate-400 dark:text-slate-500">[{OPTION_LABELS[optIdx]}]</strong>
-                          {opt}
-                        </span>
-                        {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 flex-shrink-0 ml-2" />}
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg mb-3">
+                    {q.question}
+                  </h3>
+
+                  {/* Code Snippet Box (Light/Dark Mode) */}
+                  {q.code && (
+                    <div className="mb-4 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950">
+                      <div className="bg-slate-200/80 dark:bg-slate-900 px-3 py-1 text-xs text-slate-600 dark:text-slate-400 font-mono border-b border-slate-300 dark:border-slate-800 flex items-center gap-1.5">
+                        <Code className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                        <span className="font-semibold">{q.language === 'c' ? 'C Code Snippet' : 'C++ Code Snippet'}</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <pre className="p-3.5 text-xs sm:text-sm font-mono text-indigo-950 dark:text-emerald-300 overflow-x-auto whitespace-pre bg-white/60 dark:bg-transparent">
+                        <code>{q.code}</code>
+                      </pre>
+                    </div>
+                  )}
 
-                {/* Explanation */}
-                {q.explanation && (
-                  <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-start gap-2">
-                    <HelpCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                    <span><strong>Explanation:</strong> {q.explanation}</span>
+                  {/* 4 Choices */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                    {q.options.map((opt, optIdx) => {
+                      const isCorrect = optIdx === q.correctAnswer;
+                      return (
+                        <div
+                          key={optIdx}
+                          className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between border transition-colors ${
+                            isCorrect
+                              ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-200'
+                              : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className="w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0"
+                              style={{ backgroundColor: OPTION_COLORS[optIdx] }}
+                            >
+                              {OPTION_LABELS[optIdx]}
+                            </span>
+                            <span>{opt}</span>
+                          </div>
+                          {isCorrect && (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Detailed Explanation */}
+                  {q.explanation && (
+                    <div className="mt-3 p-3 rounded-xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/40 text-xs sm:text-sm text-purple-900 dark:text-purple-200 flex items-start space-x-2">
+                      <HelpCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">Explanation: </span>
+                        <span>{q.explanation}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
         </div>
@@ -286,11 +349,11 @@ export const QuizBuilderPage = ({ onNavigate }) => {
       {activeTab === 'create' && (
         <form onSubmit={handleSaveQuiz} className="space-y-8">
           
-          {/* Metadata Card */}
+          {/* Quiz Metadata */}
           <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4 transition-colors">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Quiz Details</h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   Quiz Title
@@ -307,6 +370,36 @@ export const QuizBuilderPage = ({ onNavigate }) => {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  Subject
+                </label>
+                <select
+                  value={customSubjectId}
+                  onChange={(e) => setCustomSubjectId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-purple-500 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none"
+                >
+                  <option value="oops">OOPs in CPP</option>
+                  <option value="dsa">DSA</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  Language
+                </label>
+                <select
+                  value={customLanguage}
+                  onChange={(e) => setCustomLanguage(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-purple-500 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none"
+                >
+                  <option value="cpp">C++</option>
+                  <option value="c">C</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
                   Difficulty
                 </label>
                 <select
@@ -319,19 +412,19 @@ export const QuizBuilderPage = ({ onNavigate }) => {
                   <option value="hard">Hard</option>
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                Description (Optional)
-              </label>
-              <textarea
-                value={customDescription}
-                onChange={(e) => setCustomDescription(e.target.value)}
-                placeholder="Brief summary of syllabus topics covered in this quiz..."
-                rows={2}
-                className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-purple-500 text-slate-900 dark:text-white text-sm focus:outline-none"
-              />
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  placeholder="Brief summary of syllabus topics covered in this quiz..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:border-purple-500 text-slate-900 dark:text-white text-sm focus:outline-none"
+                />
+              </div>
             </div>
           </div>
 
