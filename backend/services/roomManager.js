@@ -19,6 +19,37 @@ export const generateRoomCode = () => {
   return code;
 };
 
+// Helper to randomly shuffle question options and update correctOptionIndex dynamically
+export const shuffleQuestionOptions = (questions = []) => {
+  return questions.map((q) => {
+    const raw = q.toObject ? q.toObject() : { ...q };
+    const originalOptions = Array.isArray(raw.options) ? [...raw.options] : [];
+    if (originalOptions.length <= 1) return raw;
+
+    const originalCorrectIdx = raw.correctOptionIndex !== undefined 
+      ? Number(raw.correctOptionIndex) 
+      : (raw.correctAnswer !== undefined ? Number(raw.correctAnswer) : 0);
+    const correctOptionText = originalOptions[originalCorrectIdx];
+
+    // Fisher-Yates shuffle array of indices
+    const indices = originalOptions.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    const shuffledOptions = indices.map(i => originalOptions[i]);
+    const newCorrectIdx = shuffledOptions.indexOf(correctOptionText);
+
+    return {
+      ...raw,
+      options: shuffledOptions,
+      correctOptionIndex: newCorrectIdx >= 0 ? newCorrectIdx : 0,
+      correctAnswer: newCorrectIdx >= 0 ? newCorrectIdx : 0,
+    };
+  });
+};
+
 // Create a new room
 export const createRoom = async (quizId, adminSocketId = null, fallbackQuiz = null) => {
   let quiz = await getQuizById(quizId);
@@ -29,12 +60,19 @@ export const createRoom = async (quizId, adminSocketId = null, fallbackQuiz = nu
     throw new Error('Quiz not found');
   }
 
+  const rawQuiz = quiz.toObject ? quiz.toObject() : { ...quiz };
+  // Randomly shuffle options for all questions in this live session
+  const shuffledQuestions = shuffleQuestionOptions(rawQuiz.questions || []);
+
   const roomCode = generateRoomCode();
   const room = {
     roomCode,
     quizId: quiz._id,
     quizTitle: quiz.title,
-    quiz,
+    quiz: {
+      ...rawQuiz,
+      questions: shuffledQuestions,
+    },
     status: 'LOBBY',
     adminSocketId,
     currentQuestionIndex: -1,
